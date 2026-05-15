@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEMO LAB / 對話備忘錄</title>
+
+<meta name="theme-color" content="#0e0f10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="備忘錄">
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%23f5d547'/><text x='256' y='340' font-family='Arial Black,sans-serif' font-size='240' font-weight='900' text-anchor='middle' fill='%23000'>ML</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%23f5d547'/><text x='256' y='340' font-family='Arial Black,sans-serif' font-size='240' font-weight='900' text-anchor='middle' fill='%23000'>ML</text></svg>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #0e0f10;
+  --bg-card: #16181a;
+  --bg-card-2: #1c1f22;
+  --bg-card-3: #22262a;
+  --border: #2a2e33;
+  --border-bright: #3a4046;
+  --text: #e8e6e1;
+  --text-dim: #8a8f96;
+  --text-muted: #5a6068;
+  --accent: #f5d547;
+  --accent-2: #ff4d2e;
+  --green: #4ade80;
+  --red: #ef4444;
+  --blue: #60a5fa;
+  --todo: #ff4d2e;
+  --idea: #f5d547;
+  --remind: #60a5fa;
+  --note: #4ade80;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans TC', sans-serif;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(245, 213, 71, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(255, 77, 46, 0.04) 0%, transparent 50%);
+  padding-bottom: 80px;
+}
+
+.header { border-bottom: 1px solid var(--border); background: rgba(14,15,16,0.92); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 100; }
+.header-inner { max-width: 1200px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-mark { width: 40px; height: 40px; background: var(--accent); color: #000; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 24px; border-radius: 4px; transform: skew(-8deg); }
+.logo-mark span { transform: skew(8deg); }
+.logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; line-height: 1; }
+.logo-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); letter-spacing: 2.5px; margin-top: 3px; }
+.firebase-status { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+.status-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.tabs { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: flex; gap: 0; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { padding: 14px 18px; background: transparent; border: none; color: var(--text-dim); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; position: relative; letter-spacing: 0.5px; white-space: nowrap; transition: color 0.2s; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); }
+.tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--accent); }
+.tab-num { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-muted); margin-right: 6px; }
+
+.main { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+.page { display: none; }
+.page.active { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); gap: 16px; flex-wrap: wrap; }
+.page-title { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; line-height: 1; }
+.page-title-zh { font-size: 13px; color: var(--text-dim); margin-top: 6px; letter-spacing: 4px; }
+.page-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); }
+.page-meta span { color: var(--accent); }
+
+.card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 20px; margin-bottom: 16px; }
+.card-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: var(--accent); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.card-title::before { content: ''; width: 4px; height: 14px; background: var(--accent); }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; text-transform: uppercase; }
+.input, .select, .textarea { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 4px; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; transition: all 0.2s; width: 100%; }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245, 213, 71, 0.1); }
+.textarea { resize: vertical; min-height: 180px; font-family: inherit; line-height: 1.6; }
+.textarea.large { min-height: 260px; }
+
+.btn { padding: 11px 20px; background: var(--accent); color: #000; border: none; border-radius: 4px; font-family: 'Noto Sans TC', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:hover { background: #ffe066; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn.secondary { background: var(--bg-card-2); color: var(--text); border: 1px solid var(--border); }
+.btn.secondary:hover { background: var(--bg-card-3); border-color: var(--border-bright); }
+.btn.danger { background: var(--accent-2); color: #fff; }
+.btn.danger:hover { background: #ff5e3e; }
+.btn.small { padding: 7px 12px; font-size: 12px; }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.type-btn { padding: 12px 8px; background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); cursor: pointer; font-family: 'Noto Sans TC', sans-serif; font-size: 12px; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.type-btn .icon { font-size: 18px; }
+.type-btn:hover { border-color: var(--border-bright); color: var(--text); }
+.type-btn.active { color: #000; border-color: transparent; }
+.type-btn.active.todo { background: var(--todo); color: #fff; }
+.type-btn.active.idea { background: var(--idea); }
+.type-btn.active.remind { background: var(--remind); }
+.type-btn.active.note { background: var(--note); }
+
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag-chip { padding: 6px 12px; background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text-dim); cursor: pointer; transition: all 0.15s; user-select: none; }
+.tag-chip:hover { border-color: var(--border-bright); color: var(--text); }
+.tag-chip.active { background: rgba(245, 213, 71, 0.15); border-color: var(--accent); color: var(--accent); }
+
+.priority-row { display: flex; gap: 6px; }
+.priority-btn { flex: 1; padding: 8px; background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); cursor: pointer; font-size: 12px; transition: all 0.15s; }
+.priority-btn:hover { color: var(--text); }
+.priority-btn.active.low { background: rgba(74, 222, 128, 0.15); border-color: var(--green); color: var(--green); }
+.priority-btn.active.med { background: rgba(245, 213, 71, 0.15); border-color: var(--accent); color: var(--accent); }
+.priority-btn.active.high { background: rgba(255, 77, 46, 0.15); border-color: var(--accent-2); color: var(--accent-2); }
+
+.memo-list { display: flex; flex-direction: column; gap: 10px; }
+.memo-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 16px; display: flex; gap: 14px; align-items: flex-start; transition: all 0.15s; position: relative; overflow: hidden; }
+.memo-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--text-muted); }
+.memo-item.type-todo::before { background: var(--todo); }
+.memo-item.type-idea::before { background: var(--idea); }
+.memo-item.type-remind::before { background: var(--remind); }
+.memo-item.type-note::before { background: var(--note); }
+.memo-item:hover { border-color: var(--border-bright); }
+.memo-item.done { opacity: 0.5; }
+.memo-item.done .memo-content { text-decoration: line-through; color: var(--text-dim); }
+
+.memo-check { width: 22px; height: 22px; border: 2px solid var(--border-bright); border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; margin-top: 1px; }
+.memo-check:hover { border-color: var(--accent); }
+.memo-check.checked { background: var(--accent); border-color: var(--accent); }
+.memo-check.checked::after { content: '✓'; color: #000; font-weight: 900; font-size: 14px; }
+
+.memo-body { flex: 1; min-width: 0; }
+.memo-content { font-size: 14px; line-height: 1.6; color: var(--text); word-break: break-word; white-space: pre-wrap; }
+.memo-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; align-items: center; }
+.memo-badge { font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 3px 8px; border-radius: 3px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
+.memo-badge.type-todo { background: rgba(255, 77, 46, 0.15); color: var(--todo); }
+.memo-badge.type-idea { background: rgba(245, 213, 71, 0.15); color: var(--idea); }
+.memo-badge.type-remind { background: rgba(96, 165, 250, 0.15); color: var(--remind); }
+.memo-badge.type-note { background: rgba(74, 222, 128, 0.15); color: var(--note); }
+.memo-badge.priority-high { background: rgba(255, 77, 46, 0.15); color: var(--accent-2); }
+.memo-badge.priority-med { background: rgba(245, 213, 71, 0.15); color: var(--accent); }
+.memo-badge.priority-low { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+.memo-tag { font-size: 11px; padding: 2px 8px; background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 10px; color: var(--text-dim); }
+.memo-time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-muted); margin-left: auto; }
+.memo-actions { display: flex; gap: 4px; margin-left: 8px; }
+.icon-btn { width: 28px; height: 28px; border: none; background: transparent; color: var(--text-dim); cursor: pointer; border-radius: 4px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.icon-btn:hover { background: var(--bg-card-2); color: var(--text); }
+.icon-btn.danger:hover { color: var(--accent-2); }
+
+.filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-bar .search-box { flex: 1; min-width: 200px; position: relative; }
+.filter-bar .search-box input { padding-left: 36px; }
+.filter-bar .search-box::before { content: '⌕'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-dim); font-size: 16px; pointer-events: none; }
+
+.parse-result { background: var(--bg-card-2); border: 1px dashed var(--border-bright); border-radius: 6px; padding: 16px; margin-top: 14px; }
+.parse-summary { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--accent); margin-bottom: 12px; letter-spacing: 1px; }
+.parse-item { background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--text-muted); border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.parse-item.type-todo { border-left-color: var(--todo); }
+.parse-item.type-idea { border-left-color: var(--idea); }
+.parse-item.type-remind { border-left-color: var(--remind); }
+.parse-item.type-note { border-left-color: var(--note); }
+.parse-item .parse-check { width: 18px; height: 18px; border: 1.5px solid var(--border-bright); border-radius: 3px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.parse-item .parse-check.checked { background: var(--accent); border-color: var(--accent); }
+.parse-item .parse-check.checked::after { content: '✓'; color: #000; font-size: 12px; font-weight: 900; }
+.parse-item .parse-text { flex: 1; min-width: 200px; font-size: 13px; line-height: 1.5; }
+.parse-item .parse-type-select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; border-radius: 3px; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+.empty-state .icon { font-size: 48px; opacity: 0.3; margin-bottom: 16px; }
+.empty-state .text { font-size: 14px; letter-spacing: 1px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 16px; position: relative; overflow: hidden; }
+.stat-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--accent); }
+.stat-box.todo::before { background: var(--todo); }
+.stat-box.idea::before { background: var(--idea); }
+.stat-box.remind::before { background: var(--remind); }
+.stat-box.note::before { background: var(--note); }
+.stat-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); letter-spacing: 1.5px; margin-bottom: 6px; }
+.stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 1px; line-height: 1; }
+
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--bg-card); border: 1px solid var(--accent); color: var(--text); padding: 12px 24px; border-radius: 4px; font-size: 13px; z-index: 200; opacity: 0; transition: all 0.3s; font-family: 'Noto Sans TC', sans-serif; letter-spacing: 1px; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* === GARAGE ALERTS === */
+.garage-vehicle-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.garage-vehicle-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent);
+}
+.gv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.gv-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gv-icon {
+  font-size: 20px;
+}
+.gv-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.gv-plate {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 2px 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+.gv-mileage {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.gv-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gv-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-card-2);
+  border-left: 3px solid var(--text-muted);
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+.gv-alert.urgency-overdue { border-left-color: var(--accent-2); background: rgba(255, 77, 46, 0.08); }
+.gv-alert.urgency-soon { border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.06); }
+.gv-alert.urgency-warn { border-left-color: var(--accent); background: rgba(245, 213, 71, 0.05); }
+.gv-alert.urgency-ok { border-left-color: var(--green); }
+.gv-alert-icon { font-size: 16px; }
+.gv-alert-body { flex: 1; min-width: 150px; }
+.gv-alert-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  margin-bottom: 2px;
+}
+.gv-alert-value {
+  font-size: 13px;
+  color: var(--text);
+}
+.gv-alert-days {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.gv-alert-days.overdue { background: rgba(255, 77, 46, 0.2); color: var(--accent-2); }
+.gv-alert-days.soon { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.gv-alert-days.warn { background: rgba(245, 213, 71, 0.15); color: var(--accent); }
+.gv-alert-days.ok { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+.gv-alert-action {
+  background: var(--bg-card-3);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Noto Sans TC', sans-serif;
+}
+.gv-alert-action:hover { background: var(--accent); color: #000; border-color: var(--accent); }
+.gv-alert-action.added { background: var(--green); color: #000; border-color: var(--green); }
+.gv-no-alerts {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* === ANNIVERSARY === */
+.anniv-type-btn, .gift-btn {
+  padding: 12px 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 12px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.anniv-type-btn .icon { font-size: 18px; }
+.anniv-type-btn:hover, .gift-btn:hover { border-color: var(--border-bright); color: var(--text); }
+.anniv-type-btn.active { background: #f472b6; color: #000; border-color: transparent; }
+.gift-btn { flex: 1; }
+.gift-btn.active { background: rgba(244,114,182,0.2); border-color: #f472b6; color: #f472b6; }
+
+.anniv-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.15s;
+  flex-wrap: wrap;
+}
+.anniv-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: #f472b6;
+}
+.anniv-card.urgency-overdue::before { background: var(--accent-2); }
+.anniv-card.urgency-today::before { background: var(--accent); animation: pulse 1.5s infinite; }
+.anniv-card.urgency-soon::before { background: #f59e0b; }
+.anniv-card:hover { border-color: var(--border-bright); }
+.anniv-icon { font-size: 28px; flex-shrink: 0; }
+.anniv-body { flex: 1; min-width: 180px; }
+.anniv-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.anniv-name { font-weight: 700; font-size: 15px; }
+.anniv-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+.anniv-tag.lunar { color: #d4a04a; border-color: rgba(212,160,74,0.4); }
+.anniv-tag.gift { color: #f472b6; border-color: rgba(244,114,182,0.4); }
+.anniv-tag.preset { color: var(--blue); border-color: rgba(96,165,250,0.4); }
+.anniv-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.anniv-countdown {
+  text-align: right;
+  margin-left: auto;
+}
+.anniv-days {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--text);
+}
+.anniv-days.today { color: var(--accent); }
+.anniv-days.overdue { color: var(--accent-2); }
+.anniv-days.soon { color: #f59e0b; }
+.anniv-days-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
+.anniv-actions {
+  display: flex;
+  gap: 4px;
+}
+.anniv-note {
+  width: 100%;
+  font-size: 12px;
+  color: var(--text-dim);
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+.preset-fest-chip {
+  padding: 7px 14px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.preset-fest-chip:hover { border-color: var(--border-bright); color: var(--text); }
+.preset-fest-chip.active {
+  background: rgba(96,165,250,0.15);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.preset-fest-chip .check { font-size: 14px; }
+
+@media (max-width: 600px) {
+  .header-inner { padding: 12px 16px; }
+  .logo-text { font-size: 18px; }
+  .logo-sub { font-size: 8px; }
+  .main { padding: 16px; }
+  .page-title { font-size: 28px; }
+  .type-grid { grid-template-columns: repeat(4, 1fr); }
+  .type-btn { padding: 10px 4px; font-size: 11px; }
+  .type-btn .icon { font-size: 16px; }
+  .memo-item { padding: 12px; gap: 10px; }
+  .memo-content { font-size: 13px; }
+  .firebase-status span { display: none; }
+  .filter-bar select { flex: 1; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-mark"><span>M</span></div>
+      <div>
+        <div class="logo-text">MEMO LAB</div>
+        <div class="logo-sub">CONVERSATION TODO</div>
+      </div>
+    </div>
+    <div class="firebase-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="dbStatus">CONNECTING...</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-page="list"><span class="tab-num">01</span>備忘清單</button>
+  <button class="tab" data-page="paste"><span class="tab-num">02</span>對話貼上</button>
+  <button class="tab" data-page="new"><span class="tab-num">03</span>手動新增</button>
+  <button class="tab" data-page="garage"><span class="tab-num">04</span>🚗 車庫提醒</button>
+  <button class="tab" data-page="anniversary"><span class="tab-num">05</span>📅 紀念日</button>
+  <button class="tab" data-page="stats"><span class="tab-num">06</span>統計總覽</button>
+</nav>
+
+<main class="main">
+
+  <section class="page active" id="page-list">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">MEMO LIST</h1>
+        <div class="page-title-zh">備 忘 清 單</div>
+      </div>
+      <div class="page-meta">共 <span id="memoCount">0</span> 筆 · 待辦 <span id="todoCount">0</span></div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="search-box">
+        <input type="text" class="input" id="searchInput" placeholder="搜尋內容、標籤...">
+      </div>
+      <select class="select" id="filterType" style="width: auto; min-width: 110px;">
+        <option value="all">全部類型</option>
+        <option value="todo">待辦事項</option>
+        <option value="idea">想法</option>
+        <option value="remind">提醒</option>
+        <option value="note">筆記</option>
+      </select>
+      <select class="select" id="filterStatus" style="width: auto; min-width: 110px;">
+        <option value="active">未完成</option>
+        <option value="all">全部</option>
+        <option value="done">已完成</option>
+      </select>
+      <select class="select" id="filterTag" style="width: auto; min-width: 110px;">
+        <option value="all">全部主題</option>
+      </select>
+    </div>
+
+    <div class="memo-list" id="memoList"></div>
+  </section>
+
+  <section class="page" id="page-paste">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">PASTE & PARSE</h1>
+        <div class="page-title-zh">貼 上 對 話 自 動 辨 識</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">貼上對話內容</div>
+      <div class="field">
+        <div class="label">CONVERSATION TEXT</div>
+        <textarea class="textarea large" id="pasteInput" placeholder="把 Claude 的回覆整段貼進來，系統會自動辨識出待辦事項、想法、提醒...
+
+支援辨識：
+• 編號清單（1. 2. 3. / 一、二、三、）
+• 項目符號（• - * ✓ ☐ □）
+• 「建議」「記得」「不要」「要注意」等關鍵字句
+• 「下一步」「待辦」標題下的內容"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="parsePastedText()">⚡ 開始辨識</button>
+        <button class="btn secondary" onclick="document.getElementById('pasteInput').value=''; document.getElementById('parseResult').style.display='none';">清空</button>
+      </div>
+
+      <div class="parse-result" id="parseResult" style="display: none;">
+        <div class="parse-summary" id="parseSummary"></div>
+        <div id="parseItems"></div>
+        <div class="btn-row" style="margin-top: 16px;">
+          <button class="btn" onclick="saveParseItems()">✓ 加入選取的項目</button>
+          <button class="btn secondary" onclick="toggleAllParse(true)">全選</button>
+          <button class="btn secondary" onclick="toggleAllParse(false)">全不選</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-new">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">NEW MEMO</h1>
+        <div class="page-title-zh">手 動 新 增 備 忘</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">新增備忘</div>
+
+      <div class="field">
+        <div class="label">TYPE / 類型</div>
+        <div class="type-grid">
+          <button class="type-btn active todo" data-type="todo" onclick="selectType('todo')"><span class="icon">☐</span><span>待辦</span></button>
+          <button class="type-btn idea" data-type="idea" onclick="selectType('idea')"><span class="icon">💡</span><span>想法</span></button>
+          <button class="type-btn remind" data-type="remind" onclick="selectType('remind')"><span class="icon">⏰</span><span>提醒</span></button>
+          <button class="type-btn note" data-type="note" onclick="selectType('note')"><span class="icon">📝</span><span>筆記</span></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">CONTENT / 內容</div>
+        <textarea class="textarea" id="newContent" placeholder="寫下備忘內容..."></textarea>
+      </div>
+
+      <div class="field">
+        <div class="label">PRIORITY / 優先級</div>
+        <div class="priority-row">
+          <button class="priority-btn low" data-priority="low" onclick="selectPriority('low')">低</button>
+          <button class="priority-btn med active" data-priority="med" onclick="selectPriority('med')">中</button>
+          <button class="priority-btn high" data-priority="high" onclick="selectPriority('high')">高</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">TOPIC TAGS / 主題標籤（可複選）</div>
+        <div class="tag-list" id="tagList"></div>
+      </div>
+
+      <div class="field">
+        <div class="label">NOTE / 備註（選填）</div>
+        <input type="text" class="input" id="newNote" placeholder="補充說明...">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="saveNewMemo()">✓ 儲存備忘</button>
+        <button class="btn secondary" onclick="clearNewForm()">清空</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-garage">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">GARAGE ALERTS</h1>
+        <div class="page-title-zh">車 庫 提 醒 中 心</div>
+      </div>
+      <div class="page-meta">同步自 MY GARAGE · <span id="garageCount">--</span> 輛</div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, rgba(245,213,71,0.08), rgba(255,77,46,0.06)); border-color: rgba(245,213,71,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px; color: var(--accent);">AUTO SYNC FROM GARAGE</div>
+          <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">自動同步車庫資料，找出快到期的驗車與保養</div>
+        </div>
+        <button class="btn small" onclick="syncAllAlertsToMemo()">⚡ 一鍵全部加入備忘</button>
+      </div>
+    </div>
+
+    <div id="garageAlerts"></div>
+  </section>
+
+  <section class="page" id="page-anniversary">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">ANNIVERSARY</h1>
+        <div class="page-title-zh">紀 念 日 · 節 日 提 醒</div>
+      </div>
+      <div class="page-meta">共 <span id="annivCount">0</span> 筆</div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, rgba(244,114,182,0.08), rgba(167,139,250,0.06)); border-color: rgba(244,114,182,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <div style="font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px; color: #f472b6;">DON'T FORGET THE IMPORTANT DAYS</div>
+          <div style="font-size: 12px; color: var(--text-dim); margin-top: 4px;">支援國曆/農曆、自動倒數、提前提醒</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn small" onclick="showAnnivForm()">+ 新增紀念日</button>
+          <button class="btn small secondary" onclick="syncUrgentAnnivToMemo()">⚡ 同步即將到來的</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="annivFormCard" style="display: none;">
+      <div class="card-title" id="annivFormTitle">新增紀念日</div>
+
+      <div class="field">
+        <div class="label">TITLE / 標題</div>
+        <input type="text" class="input" id="annivTitle" placeholder="例：老婆生日、結婚紀念日、兒子生日">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="field">
+          <div class="label">DATE / 日期</div>
+          <input type="date" class="input" id="annivDate">
+        </div>
+        <div class="field">
+          <div class="label">CALENDAR / 曆法</div>
+          <select class="select" id="annivCalendar">
+            <option value="solar">國曆</option>
+            <option value="lunar">農曆</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">TYPE / 類型</div>
+        <div class="type-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <button class="anniv-type-btn active" data-atype="birthday" onclick="selectAnnivType('birthday')"><span class="icon">🎂</span><span>生日</span></button>
+          <button class="anniv-type-btn" data-atype="memorial" onclick="selectAnnivType('memorial')"><span class="icon">💝</span><span>紀念日</span></button>
+          <button class="anniv-type-btn" data-atype="festival" onclick="selectAnnivType('festival')"><span class="icon">🎉</span><span>節日</span></button>
+          <button class="anniv-type-btn" data-atype="custom" onclick="selectAnnivType('custom')"><span class="icon">⭐</span><span>其他</span></button>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="field">
+          <div class="label">REPEAT / 每年重複</div>
+          <select class="select" id="annivRepeat">
+            <option value="yearly" selected>是（每年）</option>
+            <option value="once">否（單次）</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label">REMIND / 提前提醒（天）</div>
+          <select class="select" id="annivRemindDays">
+            <option value="1">1 天前</option>
+            <option value="3">3 天前</option>
+            <option value="7" selected>7 天前</option>
+            <option value="14">14 天前</option>
+            <option value="30">30 天前</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">GIFT / 送禮提醒</div>
+        <div class="priority-row">
+          <button class="gift-btn" data-gift="no" onclick="selectGift('no')">不需要</button>
+          <button class="gift-btn active" data-gift="yes" onclick="selectGift('yes')">需要送禮 🎁</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="label">NOTE / 備註（送禮想法、預算...）</div>
+        <input type="text" class="input" id="annivNote" placeholder="去年送了花，今年想送...">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="saveAnniversary()">✓ 儲存</button>
+        <button class="btn secondary" onclick="hideAnnivForm()">取消</button>
+        <button class="btn danger" id="annivDeleteBtn" onclick="deleteAnniversary()" style="display:none;margin-left:auto;">🗑 刪除</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">內建台灣節日（可開關）</div>
+      <div id="presetFestivals" class="tag-list"></div>
+    </div>
+
+    <div id="annivList"></div>
+  </section>
+
+  <section class="page" id="page-stats">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">OVERVIEW</h1>
+        <div class="page-title-zh">統 計 總 覽</div>
+      </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="card">
+      <div class="card-title">主題分佈</div>
+      <div id="topicStats"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">資料管理</div>
+      <div class="btn-row">
+        <button class="btn secondary" onclick="exportData()">📥 匯出 JSON</button>
+        <button class="btn secondary" onclick="exportText()">📄 匯出文字檔</button>
+        <button class="btn danger" onclick="clearAllDone()">🗑 清除已完成</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // 沿用 gogostar2 專案，與車庫、訂單共用同一個 Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBa05CUZ2kvELPyGcYFVqOARk8I0JLLH9Y",
+    authDomain: "gogostar2.firebaseapp.com",
+    projectId: "gogostar2",
+    storageBucket: "gogostar2.firebasestorage.app",
+    messagingSenderId: "785805528150",
+    appId: "1:785805528150:web:9263d9c3096645af24fff7"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const memosQ = query(collection(db, "memo_items"), orderBy("createdAt", "desc"));
+  onSnapshot(memosQ, (snapshot) => {
+    window.memos = snapshot.docs.map(d => ({ ...d.data(), _docId: d.id }));
+    document.getElementById('dbStatus').textContent = 'CONNECTED';
+    document.getElementById('statusDot').classList.add('connected');
+    if (typeof window.onDataChanged === 'function') window.onDataChanged();
+  }, (err) => {
+    console.error(err);
+    document.getElementById('dbStatus').textContent = 'OFFLINE';
+  });
+
+  // 同步車庫資料（跨應用整合）
+  onSnapshot(collection(db, "garage_vehicles"), (snap) => {
+    window.garageVehicles = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+    if (typeof window.onGarageChanged === 'function') window.onGarageChanged();
+  }, (err) => console.warn('garage_vehicles 讀取失敗（可能尚未建立）:', err.message));
+
+  onSnapshot(collection(db, "garage_records"), (snap) => {
+    window.garageRecords = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+    if (typeof window.onGarageChanged === 'function') window.onGarageChanged();
+  }, (err) => console.warn('garage_records 讀取失敗（可能尚未建立）:', err.message));
+
+  // 紀念日 collection
+  onSnapshot(collection(db, "memo_anniversaries"), (snap) => {
+    window.anniversaries = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+    if (typeof window.onAnnivChanged === 'function') window.onAnnivChanged();
+  }, (err) => console.warn('memo_anniversaries 讀取失敗:', err.message));
+
+  window.saveAnnivToFirestore = async (a) => await addDoc(collection(db, "memo_anniversaries"), a);
+  window.updateAnnivInFirestore = async (docId, data) => await updateDoc(doc(db, "memo_anniversaries", docId), data);
+  window.deleteAnnivFromFirestore = async (docId) => await deleteDoc(doc(db, "memo_anniversaries", docId));
+
+  window.saveMemoToFirestore = async (memo) => await addDoc(collection(db, "memo_items"), memo);
+  window.updateMemoInFirestore = async (docId, data) => await updateDoc(doc(db, "memo_items", docId), data);
+  window.deleteMemoFromFirestore = async (docId) => await deleteDoc(doc(db, "memo_items", docId));
+  window.batchDeleteDone = async () => {
+    const snap = await getDocs(collection(db, "memo_items"));
+    const tasks = [];
+    snap.forEach(d => { if (d.data().done === true) tasks.push(deleteDoc(doc(db, "memo_items", d.id))); });
+    await Promise.all(tasks);
+  };
+
+  window.firebaseReady = true;
+</script>
+
+<script>
+window.memos = [];
+window.garageVehicles = [];
+window.garageRecords = [];
+window.anniversaries = [];
+let currentType = 'todo';
+let currentAnnivType = 'birthday';
+let currentGift = 'yes';
+let editingAnnivId = null;
+let presetFestivalsState = {};
+let currentPriority = 'med';
+let selectedTags = new Set();
+let parseItems = [];
+
+const DEFAULT_TAGS = [
+  '稅務','銀行/貸款','行號','家庭','保險',
+  '車庫','理財','法律','投資','健康',
+  '工作','學習','購物','旅遊','其他'
+];
+
+const TYPE_PATTERNS = {
+  todo: ['記得','別忘','要去','要辦','要做','必須','需要','建議','應該','請','幫忙','檢查','確認','聯絡','打電話','預約','繳','報稅','申請','辦理','安排','處理','完成','提交','上傳','下載','購買','訂購'],
+  idea: ['想到','或許','可以考慮','不妨','試試','可能','若是','點子','構想','靈感','建議用','何不'],
+  remind: ['不要','別','小心','注意','留意','當心','避免','切勿','千萬','提醒','記住','謹記','務必','一定要','截止','到期','期限','快到']
+};
+
+const TOPIC_PATTERNS = {
+  '稅務': ['稅','報稅','綜所稅','營所稅','營業稅','扣繳','國稅局','免稅額','扣除額','所得稅','贈與稅','遺產稅','土增稅','結算申報'],
+  '銀行/貸款': ['銀行','貸款','聯徵','信用','信貸','房貸','車貸','利率','額度','主力銀行','存款','帳戶','中信','富邦','上海商銀','郵局'],
+  '行號': ['行號','合夥','合夥人','負責人','商號','營業額','盈餘','查定','記帳','小規模'],
+  '家庭': ['老婆','前妻','兒子','女兒','家人','父母','小孩','配偶','夫妻','扶養'],
+  '保險': ['保險','保單','受益人','壽險','醫療險','意外險','實支實付'],
+  '車庫': ['車','機車','汽車','保養','機油','輪胎','電瓶','車庫'],
+  '理財': ['投資','理財','ETF','基金','股票','定存','退休金'],
+  '法律': ['遺囑','繼承','特留分','合約','契約','律師','法律','法定']
+};
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-' + tab.dataset.page).classList.add('active');
+    if (tab.dataset.page === 'stats') renderStats();
+    if (tab.dataset.page === 'garage') renderGarageAlerts();
+    if (tab.dataset.page === 'anniversary') renderAnnivPage();
+  });
+});
+
+function selectType(type) {
+  currentType = type;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.type-btn[data-type="${type}"]`).classList.add('active');
+}
+function selectPriority(p) {
+  currentPriority = p;
+  document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.priority-btn[data-priority="${p}"]`).classList.add('active');
+}
+
+function renderTags() {
+  const tagList = document.getElementById('tagList');
+  tagList.innerHTML = '';
+  DEFAULT_TAGS.forEach(tag => {
+    const chip = document.createElement('div');
+    chip.className = 'tag-chip' + (selectedTags.has(tag) ? ' active' : '');
+    chip.textContent = tag;
+    chip.onclick = () => {
+      if (selectedTags.has(tag)) selectedTags.delete(tag);
+      else selectedTags.add(tag);
+      renderTags();
+    };
+    tagList.appendChild(chip);
+  });
+}
+renderTags();
+
+async function saveNewMemo() {
+  const content = document.getElementById('newContent').value.trim();
+  if (!content) { showToast('請輸入內容'); return; }
+  if (!window.firebaseReady) { showToast('資料庫尚未連線'); return; }
+
+  const memo = {
+    content,
+    type: currentType,
+    priority: currentPriority,
+    tags: Array.from(selectedTags),
+    note: document.getElementById('newNote').value.trim(),
+    done: false,
+    source: 'manual',
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+
+  try {
+    await window.saveMemoToFirestore(memo);
+    clearNewForm();
+    showToast('已儲存 ✓');
+    document.querySelector('.tab[data-page="list"]').click();
+  } catch (e) {
+    console.error(e);
+    showToast('儲存失敗');
+  }
+}
+
+function clearNewForm() {
+  document.getElementById('newContent').value = '';
+  document.getElementById('newNote').value = '';
+  selectedTags.clear();
+  selectType('todo');
+  selectPriority('med');
+  renderTags();
+}
+
+function parsePastedText() {
+  const text = document.getElementById('pasteInput').value.trim();
+  if (!text) { showToast('請貼上對話內容'); return; }
+  parseItems = extractItems(text);
+  if (parseItems.length === 0) { showToast('未能辨識出項目，請手動新增'); return; }
+  renderParseResult();
+}
+
+function extractItems(text) {
+  const items = [];
+  const lines = text.split('\n');
+  let inActionSection = false;
+  const actionSectionRegex = /(下一步|待辦|行動|建議|優化順序|action|to[- ]?do|todo|tasks?|步驟)/i;
+
+  // emoji / 符號清單（行首這些都當清單符號處理）
+  // 包含：⭐ ✅ ❌ 🔥 ⚡ 💡 ⏰ 📌 📋 📝 🟢 🟡 🔴 ✔ ✗ → ▶ ➤ 等
+  const emojiPrefixRegex = /^([⭐✅❌🔥⚡💡⏰📌📋📝🟢🟡🔴🟠🟣🔵✔✗→▶➤▸►▪◆☑☒♦♢◇◈◉⊙◎●○✦✧✪✩⚠️⚠]+)\s*(.+)$/u;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i].trim();
+    if (!line) continue;
+
+    // 區段標題偵測（# 開頭、整行粗體、冒號結尾）
+    if (line.match(/^#{1,6}\s/) || (line.match(/^\*\*[^*]+\*\*$/) && line.length < 60) || /[:：]\s*$/.test(line)) {
+      inActionSection = actionSectionRegex.test(line);
+      continue;
+    }
+
+    // 表格列（| ⭐⭐ | 內容 | 說明 |）→ 抓第二欄當內容、第一欄判斷優先級
+    if (line.startsWith('|') && line.endsWith('|') && line.split('|').length >= 3) {
+      const cells = line.split('|').map(c => c.trim()).filter(c => c);
+      // 跳過表頭分隔線（|---|---|）
+      if (cells.every(c => /^[-:]+$/.test(c))) continue;
+      // 跳過表頭（含「優先/事項/項目」等）
+      if (cells.some(c => /^(優先|事項|項目|為什麼|時間|備註|說明)$/.test(c))) continue;
+
+      // 找出「主要內容」欄位（最長的那欄，通常是事項描述）
+      let mainCell = cells[0];
+      let priCell = '';
+      for (const c of cells) {
+        if (/^[⭐★☆]+$/.test(c)) { priCell = c; }
+        else if (c.length > mainCell.length) { mainCell = c; }
+      }
+      const content = cleanText(mainCell);
+      if (content.length > 4 && content.length < 300) {
+        const item = buildItem(content, inActionSection);
+        // 用星號數覆寫優先級
+        const stars = (priCell.match(/[⭐★]/g) || []).length;
+        if (stars >= 3) item.priority = 'high';
+        else if (stars === 2) item.priority = 'med';
+        else if (stars === 1) item.priority = 'low';
+        items.push(item);
+      }
+      continue;
+    }
+
+    // 編號清單（1. / 1) / 一、/ ①）
+    let m = line.match(/^(?:\*\*)?(?:\d+[\.\)、]|[一二三四五六七八九十]+、|[①②③④⑤⑥⑦⑧⑨⑩])\s*(.+?)(?:\*\*)?$/);
+    if (m) {
+      const content = cleanText(m[1]);
+      if (content.length > 4 && content.length < 300) items.push(buildItem(content, inActionSection));
+      continue;
+    }
+
+    // 一般項目符號（- * • ✓ ☐ □）
+    m = line.match(/^[\-\*•✓☐□▪◆►▸·]\s+(.+)$/);
+    if (m) {
+      const content = cleanText(m[1]);
+      if (content.length > 4 && content.length < 300) items.push(buildItem(content, inActionSection));
+      continue;
+    }
+
+    // emoji / 符號清單（⭐ ✅ 🔥 等開頭）
+    m = line.match(emojiPrefixRegex);
+    if (m) {
+      const prefix = m[1];
+      const content = cleanText(m[2]);
+      if (content.length > 4 && content.length < 300) {
+        const item = buildItem(content, inActionSection);
+        // 根據符號決定類型/優先級
+        const stars = (prefix.match(/[⭐★]/g) || []).length;
+        if (stars >= 3) item.priority = 'high';
+        else if (stars === 2) item.priority = 'med';
+        else if (stars === 1) item.priority = 'low';
+        if (/[⚠❌🔴]/.test(prefix)) { item.type = 'remind'; item.priority = 'high'; }
+        if (/[💡]/.test(prefix)) { item.type = 'idea'; }
+        if (/[⏰]/.test(prefix)) { item.type = 'remind'; }
+        if (/[🔥⚡]/.test(prefix)) { item.priority = 'high'; }
+        if (/[✅✔☑]/.test(prefix)) { item.done = true; }
+        items.push(item);
+      }
+      continue;
+    }
+
+    // 關鍵字開頭的整句
+    if (line.length > 8 && line.length < 200) {
+      if (/^(?:記得|別忘|請|建議|提醒|注意|不要|別|要記得|要注意|記住|務必|一定要)/.test(line)) {
+        items.push(buildItem(cleanText(line), inActionSection));
+      }
+    }
+  }
+
+  // 去重
+  const seen = new Set();
+  return items.filter(it => {
+    const key = it.content.substring(0, 40);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function cleanText(s) {
+  return s.replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '').replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
+}
+
+function buildItem(content, isActionSection) {
+  return {
+    content,
+    type: detectType(content, isActionSection),
+    priority: detectPriority(content),
+    tags: detectTags(content),
+    done: false,
+    selected: true
+  };
+}
+
+function detectType(text, isActionSection) {
+  if (/不要|別\s|千萬|切勿|避免|小心|當心|警/.test(text)) return 'remind';
+  if (TYPE_PATTERNS.remind.some(k => text.includes(k))) return 'remind';
+  if (isActionSection) return 'todo';
+  if (TYPE_PATTERNS.todo.some(k => text.includes(k))) return 'todo';
+  if (TYPE_PATTERNS.idea.some(k => text.includes(k))) return 'idea';
+  return 'todo';
+}
+
+function detectPriority(text) {
+  if (/(?:重要|關鍵|務必|一定要|千萬|急|盡快|立刻|馬上|趕快|期限|截止|到期)/.test(text)) return 'high';
+  if (/(?:可以|或許|不妨|有空|考慮|或者)/.test(text)) return 'low';
+  return 'med';
+}
+
+function detectTags(text) {
+  const tags = [];
+  for (const [topic, keywords] of Object.entries(TOPIC_PATTERNS)) {
+    if (keywords.some(k => text.includes(k))) tags.push(topic);
+  }
+  return tags;
+}
+
+function renderParseResult() {
+  document.getElementById('parseResult').style.display = 'block';
+  document.getElementById('parseSummary').textContent =
+    `辨識結果：共 ${parseItems.length} 項 · 待辦 ${parseItems.filter(i=>i.type==='todo').length} · 想法 ${parseItems.filter(i=>i.type==='idea').length} · 提醒 ${parseItems.filter(i=>i.type==='remind').length}`;
+
+  const container = document.getElementById('parseItems');
+  container.innerHTML = '';
+  parseItems.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'parse-item type-' + item.type;
+    div.innerHTML = `
+      <div class="parse-check ${item.selected ? 'checked' : ''}" data-idx="${idx}"></div>
+      <div class="parse-text">${escapeHtml(item.content)}${item.tags.length ? ' <span style="color:var(--text-muted);font-size:11px;">[' + item.tags.join('·') + ']</span>' : ''}</div>
+      <select class="parse-type-select" data-idx="${idx}">
+        <option value="todo" ${item.type==='todo'?'selected':''}>待辦</option>
+        <option value="idea" ${item.type==='idea'?'selected':''}>想法</option>
+        <option value="remind" ${item.type==='remind'?'selected':''}>提醒</option>
+        <option value="note" ${item.type==='note'?'selected':''}>筆記</option>
+      </select>
+    `;
+    container.appendChild(div);
+  });
+
+  container.querySelectorAll('.parse-check').forEach(el => {
+    el.onclick = () => {
+      const idx = +el.dataset.idx;
+      parseItems[idx].selected = !parseItems[idx].selected;
+      el.classList.toggle('checked');
+    };
+  });
+  container.querySelectorAll('.parse-type-select').forEach(el => {
+    el.onchange = () => {
+      const idx = +el.dataset.idx;
+      parseItems[idx].type = el.value;
+      el.closest('.parse-item').className = 'parse-item type-' + el.value;
+    };
+  });
+}
+
+function toggleAllParse(checked) {
+  parseItems.forEach(i => i.selected = checked);
+  document.querySelectorAll('#parseItems .parse-check').forEach(el => el.classList.toggle('checked', checked));
+}
+
+async function saveParseItems() {
+  const toSave = parseItems.filter(i => i.selected);
+  if (toSave.length === 0) { showToast('請先勾選項目'); return; }
+  if (!window.firebaseReady) { showToast('資料庫尚未連線'); return; }
+  showToast(`正在儲存 ${toSave.length} 筆...`);
+
+  try {
+    for (const it of toSave) {
+      await window.saveMemoToFirestore({
+        content: it.content,
+        type: it.type,
+        priority: it.priority,
+        tags: it.tags,
+        note: '',
+        done: it.done || false,
+        source: 'paste',
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+    showToast(`已儲存 ${toSave.length} 筆 ✓`);
+    document.getElementById('pasteInput').value = '';
+    document.getElementById('parseResult').style.display = 'none';
+    document.querySelector('.tab[data-page="list"]').click();
+  } catch (e) {
+    console.error(e);
+    showToast('儲存失敗');
+  }
+}
+
+function renderList() {
+  const list = document.getElementById('memoList');
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const fType = document.getElementById('filterType').value;
+  const fStatus = document.getElementById('filterStatus').value;
+  const fTag = document.getElementById('filterTag').value;
+
+  let memos = (window.memos || []).slice();
+  memos = memos.filter(m => {
+    if (fType !== 'all' && m.type !== fType) return false;
+    if (fStatus === 'active' && m.done) return false;
+    if (fStatus === 'done' && !m.done) return false;
+    if (fTag !== 'all' && !(m.tags || []).includes(fTag)) return false;
+    if (search) {
+      const hay = (m.content + ' ' + (m.note || '') + ' ' + (m.tags || []).join(' ')).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  const priOrder = { high: 0, med: 1, low: 2 };
+  memos.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const pa = priOrder[a.priority] ?? 1;
+    const pb = priOrder[b.priority] ?? 1;
+    if (pa !== pb) return pa - pb;
+    return b.createdAt - a.createdAt;
+  });
+
+  const all = window.memos || [];
+  document.getElementById('memoCount').textContent = all.length;
+  document.getElementById('todoCount').textContent = all.filter(m => !m.done && m.type === 'todo').length;
+
+  updateTagFilter();
+
+  if (memos.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><div class="text">${all.length === 0 ? '還沒有備忘 · 從上方頁面新增或貼上對話' : '沒有符合條件的項目'}</div></div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  memos.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'memo-item type-' + m.type + (m.done ? ' done' : '');
+    const typeLabel = { todo: '待辦', idea: '想法', remind: '提醒', note: '筆記' }[m.type] || m.type;
+    const priLabel = { high: '高', med: '中', low: '低' }[m.priority] || '';
+    const tagsHtml = (m.tags || []).map(t => `<span class="memo-tag">${escapeHtml(t)}</span>`).join('');
+    const timeStr = formatTime(m.createdAt);
+    const sourceBadge = m.source === 'paste' ? '<span style="font-size:10px;color:var(--text-muted);">📋 對話</span>' : '';
+
+    div.innerHTML = `
+      <div class="memo-check ${m.done ? 'checked' : ''}" data-id="${m._docId}"></div>
+      <div class="memo-body">
+        <div class="memo-content">${escapeHtml(m.content)}</div>
+        ${m.note ? `<div style="font-size:12px;color:var(--text-dim);margin-top:6px;">${escapeHtml(m.note)}</div>` : ''}
+        <div class="memo-meta">
+          <span class="memo-badge type-${m.type}">${typeLabel}</span>
+          ${priLabel ? `<span class="memo-badge priority-${m.priority}">${priLabel}</span>` : ''}
+          ${tagsHtml}
+          ${sourceBadge}
+          <span class="memo-time">${timeStr}</span>
+        </div>
+      </div>
+      <div class="memo-actions">
+        <button class="icon-btn" title="編輯" data-action="edit" data-id="${m._docId}">✎</button>
+        <button class="icon-btn danger" title="刪除" data-action="delete" data-id="${m._docId}">✕</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  list.querySelectorAll('.memo-check').forEach(el => el.onclick = () => toggleDone(el.dataset.id));
+  list.querySelectorAll('[data-action="delete"]').forEach(el => el.onclick = () => deleteMemo(el.dataset.id));
+  list.querySelectorAll('[data-action="edit"]').forEach(el => el.onclick = () => editMemo(el.dataset.id));
+}
+
+function updateTagFilter() {
+  const fTag = document.getElementById('filterTag');
+  const current = fTag.value;
+  const tagSet = new Set();
+  (window.memos || []).forEach(m => (m.tags || []).forEach(t => tagSet.add(t)));
+  const tags = Array.from(tagSet).sort();
+  fTag.innerHTML = '<option value="all">全部主題</option>' + tags.map(t => `<option value="${escapeHtml(t)}" ${t===current?'selected':''}>${escapeHtml(t)}</option>`).join('');
+}
+
+async function toggleDone(id) {
+  const memo = window.memos.find(m => m._docId === id);
+  if (!memo) return;
+  try {
+    await window.updateMemoInFirestore(id, { done: !memo.done, updatedAt: Date.now() });
+  } catch (e) { console.error(e); showToast('更新失敗'); }
+}
+
+async function deleteMemo(id) {
+  if (!confirm('確定刪除這筆備忘？')) return;
+  try {
+    await window.deleteMemoFromFirestore(id);
+    showToast('已刪除');
+  } catch (e) { console.error(e); showToast('刪除失敗'); }
+}
+
+async function editMemo(id) {
+  const memo = window.memos.find(m => m._docId === id);
+  if (!memo) return;
+  const newContent = prompt('編輯內容：', memo.content);
+  if (newContent === null) return;
+  const trimmed = newContent.trim();
+  if (!trimmed) { showToast('內容不可為空'); return; }
+  try {
+    await window.updateMemoInFirestore(id, { content: trimmed, updatedAt: Date.now() });
+    showToast('已更新');
+  } catch (e) { console.error(e); showToast('更新失敗'); }
+}
+
+function renderStats() {
+  const all = window.memos || [];
+  const stats = {
+    total: all.length,
+    todo: all.filter(m => m.type === 'todo' && !m.done).length,
+    idea: all.filter(m => m.type === 'idea').length,
+    remind: all.filter(m => m.type === 'remind').length,
+    note: all.filter(m => m.type === 'note').length,
+    done: all.filter(m => m.done).length,
+    high: all.filter(m => m.priority === 'high' && !m.done).length
+  };
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-box"><div class="stat-label">TOTAL 全部</div><div class="stat-value">${stats.total}</div></div>
+    <div class="stat-box todo"><div class="stat-label">TODO 未完成待辦</div><div class="stat-value">${stats.todo}</div></div>
+    <div class="stat-box"><div class="stat-label">HIGH PRI 高優先</div><div class="stat-value" style="color:var(--accent-2)">${stats.high}</div></div>
+    <div class="stat-box idea"><div class="stat-label">IDEA 想法</div><div class="stat-value">${stats.idea}</div></div>
+    <div class="stat-box remind"><div class="stat-label">REMIND 提醒</div><div class="stat-value">${stats.remind}</div></div>
+    <div class="stat-box note"><div class="stat-label">NOTE 筆記</div><div class="stat-value">${stats.note}</div></div>
+    <div class="stat-box"><div class="stat-label">DONE 已完成</div><div class="stat-value" style="color:var(--green)">${stats.done}</div></div>
+  `;
+
+  const topicCount = {};
+  all.forEach(m => (m.tags || []).forEach(t => { topicCount[t] = (topicCount[t] || 0) + 1; }));
+  const sorted = Object.entries(topicCount).sort((a,b) => b[1] - a[1]);
+  const topicEl = document.getElementById('topicStats');
+  if (sorted.length === 0) {
+    topicEl.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">尚無主題標籤</div>';
+  } else {
+    const max = sorted[0][1];
+    topicEl.innerHTML = sorted.map(([t, c]) => `
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div style="width:90px;font-size:13px;">${escapeHtml(t)}</div>
+        <div style="flex:1;background:var(--bg-card-2);height:20px;border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${c/max*100}%;background:linear-gradient(90deg,var(--accent),var(--accent-2));"></div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);width:30px;text-align:right;">${c}</div>
+      </div>
+    `).join('');
+  }
+}
+
+function exportData() {
+  const data = (window.memos || []).map(({ _docId, ...rest }) => rest);
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `memo_${formatDate()}.json`);
+}
+
+function exportText() {
+  const memos = window.memos || [];
+  const groups = { todo: [], idea: [], remind: [], note: [] };
+  memos.filter(m => !m.done).forEach(m => { (groups[m.type] || groups.note).push(m); });
+  const labels = { todo: '待辦事項', idea: '想法', remind: '提醒', note: '筆記' };
+
+  let txt = `備忘錄匯出 · ${formatDate()}\n${'='.repeat(40)}\n\n`;
+  for (const [k, arr] of Object.entries(groups)) {
+    if (arr.length === 0) continue;
+    txt += `【${labels[k]}】\n`;
+    arr.forEach((m, i) => {
+      const pri = m.priority === 'high' ? '★ ' : '';
+      const tags = (m.tags || []).length ? ' [' + m.tags.join('·') + ']' : '';
+      txt += `${i+1}. ${pri}${m.content}${tags}\n`;
+      if (m.note) txt += `   備註：${m.note}\n`;
+    });
+    txt += '\n';
+  }
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  downloadBlob(blob, `memo_${formatDate()}.txt`);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function clearAllDone() {
+  const count = (window.memos || []).filter(m => m.done).length;
+  if (count === 0) { showToast('沒有已完成項目'); return; }
+  if (!confirm(`確定清除 ${count} 筆已完成項目？`)) return;
+  try {
+    await window.batchDeleteDone();
+    showToast(`已清除 ${count} 筆`);
+  } catch (e) { console.error(e); showToast('清除失敗'); }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return '剛剛';
+  if (diff < 3600) return Math.floor(diff/60) + ' 分前';
+  if (diff < 86400) return Math.floor(diff/3600) + ' 小時前';
+  if (diff < 86400*7) return Math.floor(diff/86400) + ' 天前';
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function formatDate() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+window.onDataChanged = () => {
+  renderList();
+  if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+  if (document.getElementById('page-garage').classList.contains('active')) renderGarageAlerts();
+  if (document.getElementById('page-anniversary').classList.contains('active')) renderAnnivList();
+};
+
+window.onGarageChanged = () => {
+  if (document.getElementById('page-garage').classList.contains('active')) renderGarageAlerts();
+};
+
+window.onAnnivChanged = () => {
+  if (document.getElementById('page-anniversary').classList.contains('active')) renderAnnivList();
+};
+
+// === 車庫提醒 ===
+function calcDaysLeft(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  d.setHours(0,0,0,0);
+  return Math.round((d - now) / 86400000);
+}
+
+function urgencyOf(daysLeft) {
+  if (daysLeft === null) return null;
+  if (daysLeft < 0) return 'overdue';
+  if (daysLeft <= 30) return 'soon';
+  if (daysLeft <= 90) return 'warn';
+  return 'ok';
+}
+
+function daysLabel(daysLeft) {
+  if (daysLeft === null) return '';
+  if (daysLeft < 0) return `已逾期 ${-daysLeft} 天`;
+  if (daysLeft === 0) return '今天';
+  if (daysLeft === 1) return '明天';
+  return `剩 ${daysLeft} 天`;
+}
+
+// 取得每台車的「下次保養」資料（從最新一筆保養紀錄）
+function getNextMaintenance(vehicleId) {
+  const records = (window.garageRecords || [])
+    .filter(r => r.vehicleId === vehicleId && (r.nextDate || r.nextMileage))
+    .sort((a, b) => (b.serviceDate || '').localeCompare(a.serviceDate || ''));
+  return records[0] || null;
+}
+
+// 取得車輛目前里程（取車輛 currentMileage 和最新紀錄 mileage 較大者）
+function getCurrentMileage(vehicle) {
+  const vMile = +(vehicle.currentMileage || 0);
+  const records = (window.garageRecords || []).filter(r => r.vehicleId === vehicle.id);
+  const recMile = records.reduce((max, r) => Math.max(max, +(r.mileage || 0)), 0);
+  return Math.max(vMile, recMile);
+}
+
+function vehicleIcon(type) {
+  if (type === 'motor' || type === 'motorcycle') return '🏍';
+  return '🚗';
+}
+
+function renderGarageAlerts() {
+  const container = document.getElementById('garageAlerts');
+  const vehicles = window.garageVehicles || [];
+  document.getElementById('garageCount').textContent = vehicles.length;
+
+  if (vehicles.length === 0) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="icon">🚗</div>
+      <div class="text">尚未從車庫讀取到資料<br><span style="font-size:12px;color:var(--text-muted);">請先到 MY GARAGE 新增車輛，或檢查 Firebase 連線</span></div>
+    </div>`;
+    return;
+  }
+
+  // 按急迫度排序：有逾期的車排前面
+  const vehiclesSorted = vehicles.slice().sort((a, b) => {
+    const urgA = vehicleMaxUrgency(a);
+    const urgB = vehicleMaxUrgency(b);
+    const order = { overdue: 0, soon: 1, warn: 2, ok: 3, null: 4 };
+    return (order[urgA] ?? 5) - (order[urgB] ?? 5);
+  });
+
+  container.innerHTML = '';
+  vehiclesSorted.forEach(v => {
+    const nextMaint = getNextMaintenance(v.id);
+    const currentMile = getCurrentMileage(v);
+
+    const inspDays = calcDaysLeft(v.nextInspection);
+    const maintDays = calcDaysLeft(nextMaint?.nextDate);
+    const mileLeft = nextMaint?.nextMileage ? (+nextMaint.nextMileage - currentMile) : null;
+
+    const inspUrg = urgencyOf(inspDays);
+    const maintUrg = urgencyOf(maintDays);
+
+    const alerts = [];
+
+    // 驗車提醒
+    if (v.nextInspection) {
+      alerts.push(`
+        <div class="gv-alert urgency-${inspUrg}">
+          <span class="gv-alert-icon">📋</span>
+          <div class="gv-alert-body">
+            <div class="gv-alert-label">NEXT INSPECTION 下次驗車</div>
+            <div class="gv-alert-value">${formatDateDisplay(v.nextInspection)}</div>
+          </div>
+          <span class="gv-alert-days ${inspUrg}">${daysLabel(inspDays)}</span>
+          <button class="gv-alert-action" data-vid="${v._docId}" data-kind="inspection" onclick="addGarageAlertToMemo(this)">+ 加入備忘</button>
+        </div>
+      `);
+    }
+
+    // 保養日期提醒
+    if (nextMaint?.nextDate) {
+      alerts.push(`
+        <div class="gv-alert urgency-${maintUrg}">
+          <span class="gv-alert-icon">🔧</span>
+          <div class="gv-alert-body">
+            <div class="gv-alert-label">NEXT MAINTENANCE 下次保養（日期）</div>
+            <div class="gv-alert-value">${formatDateDisplay(nextMaint.nextDate)}</div>
+          </div>
+          <span class="gv-alert-days ${maintUrg}">${daysLabel(maintDays)}</span>
+          <button class="gv-alert-action" data-vid="${v._docId}" data-kind="maintenance-date" onclick="addGarageAlertToMemo(this)">+ 加入備忘</button>
+        </div>
+      `);
+    }
+
+    // 保養里程提醒
+    if (nextMaint?.nextMileage) {
+      const mileUrg = mileLeft === null ? 'ok' : (mileLeft < 0 ? 'overdue' : (mileLeft <= 500 ? 'soon' : (mileLeft <= 1500 ? 'warn' : 'ok')));
+      const mileLabel = mileLeft === null ? '' : (mileLeft < 0 ? `已超過 ${(-mileLeft).toLocaleString()} KM` : `還剩 ${mileLeft.toLocaleString()} KM`);
+      alerts.push(`
+        <div class="gv-alert urgency-${mileUrg}">
+          <span class="gv-alert-icon">⊙</span>
+          <div class="gv-alert-body">
+            <div class="gv-alert-label">NEXT MILEAGE 下次保養（里程）</div>
+            <div class="gv-alert-value">${(+nextMaint.nextMileage).toLocaleString()} KM · 目前 ${currentMile.toLocaleString()} KM</div>
+          </div>
+          <span class="gv-alert-days ${mileUrg}">${mileLabel}</span>
+          <button class="gv-alert-action" data-vid="${v._docId}" data-kind="maintenance-mile" onclick="addGarageAlertToMemo(this)">+ 加入備忘</button>
+        </div>
+      `);
+    }
+
+    const alertHtml = alerts.length ? `<div class="gv-alerts">${alerts.join('')}</div>` : `<div class="gv-no-alerts">⊘ 尚未設定驗車或下次保養資訊</div>`;
+    const name = v.nickname || v.model || v.brand || '未命名車輛';
+    const plate = v.plate ? `<span class="gv-plate">${escapeHtml(v.plate)}</span>` : '';
+    const mileInfo = currentMile > 0 ? `<span class="gv-mileage">⊙ ${currentMile.toLocaleString()} KM</span>` : '';
+
+    const div = document.createElement('div');
+    div.className = 'garage-vehicle-card';
+    div.innerHTML = `
+      <div class="gv-header">
+        <div class="gv-title">
+          <span class="gv-icon">${vehicleIcon(v.type)}</span>
+          <span class="gv-name">${escapeHtml(name)}</span>
+          ${plate}
+        </div>
+        ${mileInfo}
+      </div>
+      ${alertHtml}
+    `;
+    container.appendChild(div);
+  });
+}
+
+function vehicleMaxUrgency(vehicle) {
+  const nextMaint = getNextMaintenance(vehicle.id);
+  const currentMile = getCurrentMileage(vehicle);
+  const inspDays = calcDaysLeft(vehicle.nextInspection);
+  const maintDays = calcDaysLeft(nextMaint?.nextDate);
+  const mileLeft = nextMaint?.nextMileage ? (+nextMaint.nextMileage - currentMile) : null;
+  const urgencies = [
+    urgencyOf(inspDays),
+    urgencyOf(maintDays),
+    mileLeft === null ? null : (mileLeft < 0 ? 'overdue' : (mileLeft <= 500 ? 'soon' : (mileLeft <= 1500 ? 'warn' : 'ok')))
+  ].filter(u => u);
+  if (urgencies.includes('overdue')) return 'overdue';
+  if (urgencies.includes('soon')) return 'soon';
+  if (urgencies.includes('warn')) return 'warn';
+  if (urgencies.includes('ok')) return 'ok';
+  return null;
+}
+
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// 把單一車庫提醒加入備忘錄
+async function addGarageAlertToMemo(btn) {
+  const vDocId = btn.dataset.vid;
+  const kind = btn.dataset.kind;
+  const vehicle = (window.garageVehicles || []).find(v => v._docId === vDocId);
+  if (!vehicle) { showToast('找不到車輛'); return; }
+
+  const memo = buildGarageMemo(vehicle, kind);
+  if (!memo) { showToast('無法建立備忘'); return; }
+
+  // 檢查是否重複（同車同類型同日期/里程）
+  const dup = (window.memos || []).find(m =>
+    m.source === 'garage' &&
+    m.meta?.vehicleId === vehicle.id &&
+    m.meta?.kind === kind &&
+    m.meta?.target === memo.meta.target &&
+    !m.done
+  );
+  if (dup) {
+    showToast('此提醒已存在備忘清單中');
+    btn.classList.add('added');
+    btn.textContent = '✓ 已加入';
+    return;
+  }
+
+  try {
+    await window.saveMemoToFirestore(memo);
+    btn.classList.add('added');
+    btn.textContent = '✓ 已加入';
+    showToast('已加入備忘 ✓');
+  } catch (e) {
+    console.error(e);
+    showToast('儲存失敗');
+  }
+}
+
+function buildGarageMemo(vehicle, kind) {
+  const name = vehicle.nickname || vehicle.model || vehicle.brand || '車輛';
+  const plate = vehicle.plate ? ` (${vehicle.plate})` : '';
+  const nextMaint = getNextMaintenance(vehicle.id);
+  const currentMile = getCurrentMileage(vehicle);
+
+  let content, priority, target;
+
+  if (kind === 'inspection') {
+    if (!vehicle.nextInspection) return null;
+    const days = calcDaysLeft(vehicle.nextInspection);
+    content = `${name}${plate} 驗車 · ${formatDateDisplay(vehicle.nextInspection)}（${daysLabel(days)}）`;
+    priority = days < 0 || days <= 30 ? 'high' : (days <= 90 ? 'med' : 'low');
+    target = vehicle.nextInspection;
+  } else if (kind === 'maintenance-date') {
+    if (!nextMaint?.nextDate) return null;
+    const days = calcDaysLeft(nextMaint.nextDate);
+    content = `${name}${plate} 保養 · ${formatDateDisplay(nextMaint.nextDate)}（${daysLabel(days)}）`;
+    priority = days < 0 || days <= 30 ? 'high' : (days <= 90 ? 'med' : 'low');
+    target = nextMaint.nextDate;
+  } else if (kind === 'maintenance-mile') {
+    if (!nextMaint?.nextMileage) return null;
+    const left = +nextMaint.nextMileage - currentMile;
+    const leftLabel = left < 0 ? `已超過 ${(-left).toLocaleString()} KM` : `還剩 ${left.toLocaleString()} KM`;
+    content = `${name}${plate} 保養里程 · ${(+nextMaint.nextMileage).toLocaleString()} KM（${leftLabel}）`;
+    priority = left < 0 || left <= 500 ? 'high' : (left <= 1500 ? 'med' : 'low');
+    target = String(nextMaint.nextMileage);
+  } else {
+    return null;
+  }
+
+  return {
+    content,
+    type: 'remind',
+    priority,
+    tags: ['車庫'],
+    note: '自動同步自 MY GARAGE',
+    done: false,
+    source: 'garage',
+    meta: {
+      vehicleId: vehicle.id,
+      kind,
+      target
+    },
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+}
+
+// 一鍵將所有「30天內或里程500內」的提醒加入備忘
+async function syncAllAlertsToMemo() {
+  const vehicles = window.garageVehicles || [];
+  if (vehicles.length === 0) { showToast('無車輛資料'); return; }
+
+  const toAdd = [];
+  vehicles.forEach(v => {
+    const nextMaint = getNextMaintenance(v.id);
+    const currentMile = getCurrentMileage(v);
+
+    // 驗車：30天內
+    if (v.nextInspection) {
+      const d = calcDaysLeft(v.nextInspection);
+      if (d !== null && d <= 30) toAdd.push({ v, kind: 'inspection' });
+    }
+    // 保養日期：30天內
+    if (nextMaint?.nextDate) {
+      const d = calcDaysLeft(nextMaint.nextDate);
+      if (d !== null && d <= 30) toAdd.push({ v, kind: 'maintenance-date' });
+    }
+    // 保養里程：剩500內
+    if (nextMaint?.nextMileage) {
+      const left = +nextMaint.nextMileage - currentMile;
+      if (left <= 500) toAdd.push({ v, kind: 'maintenance-mile' });
+    }
+  });
+
+  if (toAdd.length === 0) {
+    showToast('沒有需要立即注意的項目（30 天 / 500 KM 內）');
+    return;
+  }
+
+  if (!confirm(`找到 ${toAdd.length} 筆需要關注的提醒，全部加入備忘錄？\n（已存在的會自動跳過）`)) return;
+
+  let added = 0, skipped = 0;
+  for (const { v, kind } of toAdd) {
+    const memo = buildGarageMemo(v, kind);
+    if (!memo) continue;
+    const dup = (window.memos || []).find(m =>
+      m.source === 'garage' && m.meta?.vehicleId === v.id && m.meta?.kind === kind && m.meta?.target === memo.meta.target && !m.done
+    );
+    if (dup) { skipped++; continue; }
+    try {
+      await window.saveMemoToFirestore(memo);
+      added++;
+    } catch (e) { console.error(e); }
+  }
+  showToast(`新增 ${added} 筆，跳過 ${skipped} 筆重複 ✓`);
+  setTimeout(() => renderGarageAlerts(), 500);
+}
+
+['searchInput', 'filterType', 'filterStatus', 'filterTag'].forEach(id => {
+  document.getElementById(id).addEventListener('input', renderList);
+  document.getElementById(id).addEventListener('change', renderList);
+});
+
+// ============================================
+// === 農曆轉換（1900~2100，資料表內建） ===
+// ============================================
+const LUNAR_INFO = [
+  0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+  0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+  0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+  0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+  0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+  0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+  0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+  0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+  0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+  0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+  0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+  0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+  0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+  0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+  0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+  0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+  0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+  0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+  0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+  0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,
+  0x0d520
+];
+function lunarYearDays(year) {
+  let sum = 348;
+  for (let i = 0x8000; i > 0x8; i >>= 1) sum += (LUNAR_INFO[year - 1900] & i) ? 1 : 0;
+  return sum + leapDays(year);
+}
+function leapMonth(year) { return LUNAR_INFO[year - 1900] & 0xf; }
+function leapDays(year) {
+  if (leapMonth(year)) return (LUNAR_INFO[year - 1900] & 0x10000) ? 30 : 29;
+  return 0;
+}
+function monthDays(year, month) { return (LUNAR_INFO[year - 1900] & (0x10000 >> month)) ? 30 : 29; }
+
+function solarToLunar(y, m, d) {
+  if (y < 1900 || y > 2100) return null;
+  const baseDate = new Date(1900, 0, 31);
+  const objDate = new Date(y, m - 1, d);
+  let offset = Math.floor((objDate - baseDate) / 86400000);
+  let year = 1900, temp = 0;
+  for (; year < 2101 && offset > 0; year++) { temp = lunarYearDays(year); offset -= temp; }
+  if (offset < 0) { offset += temp; year--; }
+  let leap = leapMonth(year), isLeap = false, month = 1;
+  for (; month < 13 && offset > 0; month++) {
+    if (leap > 0 && month === leap + 1 && !isLeap) { --month; isLeap = true; temp = leapDays(year); }
+    else { temp = monthDays(year, month); }
+    if (isLeap && month === leap + 1) isLeap = false;
+    offset -= temp;
+  }
+  if (offset === 0 && leap > 0 && month === leap + 1) {
+    if (isLeap) isLeap = false; else { isLeap = true; --month; }
+  }
+  if (offset < 0) { offset += temp; --month; }
+  return { year, month, day: offset + 1, isLeap };
+}
+
+function lunarToSolar(year, month, day) {
+  if (year < 1900 || year > 2100) return null;
+  let offset = 0;
+  for (let i = 1900; i < year; i++) offset += lunarYearDays(i);
+  const leap = leapMonth(year);
+  for (let i = 1; i < month; i++) {
+    offset += monthDays(year, i);
+    if (i === leap && leap > 0) offset += leapDays(year);
+  }
+  offset += day - 1;
+  const baseDate = new Date(1900, 0, 31);
+  const result = new Date(baseDate.getTime() + offset * 86400000);
+  return { year: result.getFullYear(), month: result.getMonth() + 1, day: result.getDate() };
+}
+
+// ============================================
+// === 紀念日邏輯 ===
+// ============================================
+const ANNIV_ICONS = { birthday: '🎂', memorial: '💝', festival: '🎉', custom: '⭐' };
+const ANNIV_LABELS = { birthday: '生日', memorial: '紀念日', festival: '節日', custom: '其他' };
+
+const PRESET_FESTIVALS = [
+  { id: 'p_valentine', title: '西洋情人節', month: 2, day: 14, type: 'festival', calendar: 'solar', gift: 'yes' },
+  { id: 'p_whiteday', title: '白色情人節', month: 3, day: 14, type: 'festival', calendar: 'solar', gift: 'yes' },
+  { id: 'p_mother', title: '母親節', type: 'festival', calendar: 'solar_mother', gift: 'yes' },
+  { id: 'p_father', title: '父親節', month: 8, day: 8, type: 'festival', calendar: 'solar', gift: 'yes' },
+  { id: 'p_xmas', title: '聖誕節', month: 12, day: 25, type: 'festival', calendar: 'solar', gift: 'yes' },
+  { id: 'p_newyear', title: '農曆春節', lunarMonth: 1, lunarDay: 1, type: 'festival', calendar: 'lunar', gift: 'no' },
+  { id: 'p_lantern', title: '元宵節', lunarMonth: 1, lunarDay: 15, type: 'festival', calendar: 'lunar', gift: 'no' },
+  { id: 'p_qixi', title: '七夕情人節', lunarMonth: 7, lunarDay: 7, type: 'festival', calendar: 'lunar', gift: 'yes' },
+  { id: 'p_midautumn', title: '中秋節', lunarMonth: 8, lunarDay: 15, type: 'festival', calendar: 'lunar', gift: 'no' },
+  { id: 'p_dragon', title: '端午節', lunarMonth: 5, lunarDay: 5, type: 'festival', calendar: 'lunar', gift: 'no' }
+];
+
+function nthWeekdayOfMonth(year, month, nth, weekday) {
+  const first = new Date(year, month - 1, 1);
+  const firstWeekday = first.getDay();
+  const day = 1 + ((weekday - firstWeekday + 7) % 7) + (nth - 1) * 7;
+  return new Date(year, month - 1, day);
+}
+
+function getNextOccurrence(anniv) {
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const thisYear = now.getFullYear();
+
+  function buildDate(year) {
+    if (anniv.calendar === 'lunar') {
+      const s = lunarToSolar(year, anniv.lunarMonth, anniv.lunarDay);
+      return s ? new Date(s.year, s.month - 1, s.day) : null;
+    } else if (anniv.calendar === 'solar_mother') {
+      return nthWeekdayOfMonth(year, 5, 2, 0);
+    } else {
+      const m = anniv.solarMonth;
+      const d = anniv.solarDay;
+      return new Date(year, m - 1, d);
+    }
+  }
+
+  if (anniv.repeat === 'once') {
+    if (anniv.calendar === 'lunar') {
+      const s = lunarToSolar(anniv.lunarYear || thisYear, anniv.lunarMonth, anniv.lunarDay);
+      return s ? new Date(s.year, s.month - 1, s.day) : null;
+    } else {
+      return new Date(anniv.solarYear || thisYear, (anniv.solarMonth) - 1, anniv.solarDay);
+    }
+  }
+
+  let d = buildDate(thisYear);
+  if (d && d < now) d = buildDate(thisYear + 1);
+  return d;
+}
+
+function calcAnnivDaysLeft(anniv) {
+  const d = getNextOccurrence(anniv);
+  if (!d) return null;
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  d.setHours(0,0,0,0);
+  return Math.round((d - now) / 86400000);
+}
+
+function annivUrgency(days) {
+  if (days === null) return null;
+  if (days < 0) return 'overdue';
+  if (days === 0) return 'today';
+  if (days <= 7) return 'soon';
+  if (days <= 30) return 'warn';
+  return 'ok';
+}
+
+function annivDaysLabel(days) {
+  if (days === null) return '';
+  if (days === 0) return '就是今天！';
+  if (days === 1) return '明天';
+  if (days < 0) return `已過 ${-days} 天`;
+  return `還剩 ${days} 天`;
+}
+
+function showAnnivForm() {
+  document.getElementById('annivFormCard').style.display = 'block';
+  document.getElementById('annivFormTitle').textContent = editingAnnivId ? '編輯紀念日' : '新增紀念日';
+  document.getElementById('annivDeleteBtn').style.display = editingAnnivId ? 'inline-flex' : 'none';
+  document.getElementById('annivFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hideAnnivForm() {
+  document.getElementById('annivFormCard').style.display = 'none';
+  clearAnnivForm();
+}
+
+function clearAnnivForm() {
+  editingAnnivId = null;
+  document.getElementById('annivTitle').value = '';
+  document.getElementById('annivDate').value = '';
+  document.getElementById('annivCalendar').value = 'solar';
+  document.getElementById('annivRepeat').value = 'yearly';
+  document.getElementById('annivRemindDays').value = '7';
+  document.getElementById('annivNote').value = '';
+  selectAnnivType('birthday');
+  selectGift('yes');
+}
+
+function selectAnnivType(t) {
+  currentAnnivType = t;
+  document.querySelectorAll('.anniv-type-btn').forEach(b => b.classList.remove('active'));
+  const el = document.querySelector(`.anniv-type-btn[data-atype="${t}"]`);
+  if (el) el.classList.add('active');
+}
+
+function selectGift(g) {
+  currentGift = g;
+  document.querySelectorAll('.gift-btn').forEach(b => b.classList.remove('active'));
+  const el = document.querySelector(`.gift-btn[data-gift="${g}"]`);
+  if (el) el.classList.add('active');
+}
+
+async function saveAnniversary() {
+  const title = document.getElementById('annivTitle').value.trim();
+  const dateStr = document.getElementById('annivDate').value;
+  if (!title || !dateStr) { showToast('請填寫標題和日期'); return; }
+  if (!window.firebaseReady) { showToast('資料庫尚未連線'); return; }
+
+  const calendar = document.getElementById('annivCalendar').value;
+  const repeat = document.getElementById('annivRepeat').value;
+  const remindDays = +document.getElementById('annivRemindDays').value;
+  const note = document.getElementById('annivNote').value.trim();
+
+  const [yStr, mStr, dStr] = dateStr.split('-');
+  const y = +yStr, m = +mStr, d = +dStr;
+
+  const data = {
+    title, type: currentAnnivType,
+    calendar, repeat, remindDays,
+    gift: currentGift, note,
+    updatedAt: Date.now()
+  };
+
+  if (calendar === 'lunar') {
+    const lunar = solarToLunar(y, m, d);
+    if (!lunar) { showToast('日期超出農曆轉換範圍 (1900-2100)'); return; }
+    data.lunarYear = lunar.year;
+    data.lunarMonth = lunar.month;
+    data.lunarDay = lunar.day;
+    data.solarReference = dateStr;
+  } else {
+    data.solarYear = y;
+    data.solarMonth = m;
+    data.solarDay = d;
+  }
+
+  try {
+    if (editingAnnivId) {
+      await window.updateAnnivInFirestore(editingAnnivId, data);
+      showToast('已更新');
+    } else {
+      data.createdAt = Date.now();
+      await window.saveAnnivToFirestore(data);
+      showToast('已新增 ✓');
+    }
+    hideAnnivForm();
+  } catch (e) { console.error(e); showToast('儲存失敗'); }
+}
+
+function editAnniv(id) {
+  const a = (window.anniversaries || []).find(x => x._docId === id);
+  if (!a) return;
+  editingAnnivId = id;
+  document.getElementById('annivTitle').value = a.title || '';
+  document.getElementById('annivCalendar').value = a.calendar || 'solar';
+  document.getElementById('annivRepeat').value = a.repeat || 'yearly';
+  document.getElementById('annivRemindDays').value = String(a.remindDays || 7);
+  document.getElementById('annivNote').value = a.note || '';
+  selectAnnivType(a.type || 'birthday');
+  selectGift(a.gift || 'no');
+
+  let dateStr = '';
+  if (a.calendar === 'lunar' && a.solarReference) {
+    dateStr = a.solarReference;
+  } else if (a.solarYear) {
+    dateStr = `${a.solarYear}-${String(a.solarMonth).padStart(2,'0')}-${String(a.solarDay).padStart(2,'0')}`;
+  } else if (a.solarMonth) {
+    const nowY = new Date().getFullYear();
+    dateStr = `${nowY}-${String(a.solarMonth).padStart(2,'0')}-${String(a.solarDay).padStart(2,'0')}`;
+  }
+  document.getElementById('annivDate').value = dateStr;
+  showAnnivForm();
+}
+
+async function deleteAnniversary() {
+  if (!editingAnnivId) return;
+  if (!confirm('確定刪除這個紀念日？')) return;
+  try {
+    await window.deleteAnnivFromFirestore(editingAnnivId);
+    showToast('已刪除');
+    hideAnnivForm();
+  } catch (e) { console.error(e); showToast('刪除失敗'); }
+}
+
+function renderAnnivPage() {
+  renderPresetFestivals();
+  renderAnnivList();
+}
+
+function renderPresetFestivals() {
+  const container = document.getElementById('presetFestivals');
+  const enabled = (window.anniversaries || []).filter(a => a.presetId).map(a => a.presetId);
+  container.innerHTML = '';
+  PRESET_FESTIVALS.forEach(f => {
+    const isActive = enabled.includes(f.id);
+    const chip = document.createElement('div');
+    chip.className = 'preset-fest-chip' + (isActive ? ' active' : '');
+    chip.innerHTML = `<span class="check">${isActive ? '✓' : '+'}</span><span>${f.title}</span>`;
+    chip.onclick = () => togglePresetFestival(f, isActive);
+    container.appendChild(chip);
+  });
+}
+
+async function togglePresetFestival(festival, isActive) {
+  if (!window.firebaseReady) { showToast('資料庫尚未連線'); return; }
+  if (isActive) {
+    const existing = (window.anniversaries || []).find(a => a.presetId === festival.id);
+    if (existing) {
+      try {
+        await window.deleteAnnivFromFirestore(existing._docId);
+        showToast(`已移除 ${festival.title}`);
+      } catch (e) { console.error(e); showToast('移除失敗'); }
+    }
+  } else {
+    const data = {
+      title: festival.title,
+      type: festival.type,
+      calendar: festival.calendar,
+      repeat: 'yearly',
+      remindDays: 7,
+      gift: festival.gift,
+      note: '',
+      presetId: festival.id,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    if (festival.calendar === 'lunar') {
+      data.lunarMonth = festival.lunarMonth;
+      data.lunarDay = festival.lunarDay;
+    } else if (festival.calendar !== 'solar_mother') {
+      data.solarMonth = festival.month;
+      data.solarDay = festival.day;
+    }
+    try {
+      await window.saveAnnivToFirestore(data);
+      showToast(`已新增 ${festival.title} ✓`);
+    } catch (e) { console.error(e); showToast('新增失敗'); }
+  }
+}
+
+function renderAnnivList() {
+  const list = document.getElementById('annivList');
+  const all = window.anniversaries || [];
+  document.getElementById('annivCount').textContent = all.length;
+  renderPresetFestivals();
+
+  if (all.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="icon">📅</div>
+      <div class="text">還沒有紀念日<br><span style="font-size:12px;color:var(--text-muted);">點上方「+ 新增紀念日」或啟用內建節日</span></div>
+    </div>`;
+    return;
+  }
+
+  const withDays = all.map(a => ({ a, days: calcAnnivDaysLeft(a) }))
+    .sort((x, y) => {
+      if (x.days === null) return 1;
+      if (y.days === null) return -1;
+      return x.days - y.days;
+    });
+
+  list.innerHTML = '';
+  withDays.forEach(({ a, days }) => {
+    const urg = annivUrgency(days);
+    const next = getNextOccurrence(a);
+    const dateStr = next ? `${next.getFullYear()}/${String(next.getMonth()+1).padStart(2,'0')}/${String(next.getDate()).padStart(2,'0')}` : '--';
+    const weekday = next ? ['日','一','二','三','四','五','六'][next.getDay()] : '';
+
+    let lunarStr = '';
+    if (a.calendar === 'lunar') lunarStr = ` · 農曆 ${a.lunarMonth}/${a.lunarDay}`;
+
+    const tags = [];
+    if (a.calendar === 'lunar') tags.push(`<span class="anniv-tag lunar">農曆</span>`);
+    if (a.gift === 'yes') tags.push(`<span class="anniv-tag gift">🎁 送禮</span>`);
+    if (a.presetId) tags.push(`<span class="anniv-tag preset">內建</span>`);
+    if (a.repeat === 'once') tags.push(`<span class="anniv-tag">單次</span>`);
+
+    const card = document.createElement('div');
+    card.className = 'anniv-card urgency-' + (urg || 'ok');
+    card.innerHTML = `
+      <div class="anniv-icon">${ANNIV_ICONS[a.type] || '📅'}</div>
+      <div class="anniv-body">
+        <div class="anniv-title-row">
+          <span class="anniv-name">${escapeHtml(a.title)}</span>
+          ${tags.join('')}
+        </div>
+        <div class="anniv-date">${dateStr} (週${weekday})${lunarStr}</div>
+      </div>
+      <div class="anniv-countdown">
+        <div class="anniv-days ${urg || ''}">${days === null ? '--' : (days === 0 ? '🎊' : Math.abs(days))}</div>
+        <div class="anniv-days-label">${annivDaysLabel(days)}</div>
+      </div>
+      <div class="anniv-actions">
+        <button class="icon-btn" title="加入備忘" data-id="${a._docId}" data-act="memo">📝</button>
+        <button class="icon-btn" title="編輯" data-id="${a._docId}" data-act="edit">✎</button>
+      </div>
+      ${a.note ? `<div class="anniv-note">💭 ${escapeHtml(a.note)}</div>` : ''}
+    `;
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll('[data-act="edit"]').forEach(el => el.onclick = () => editAnniv(el.dataset.id));
+  list.querySelectorAll('[data-act="memo"]').forEach(el => el.onclick = () => addAnnivToMemo(el.dataset.id));
+}
+
+async function addAnnivToMemo(annivId) {
+  const a = (window.anniversaries || []).find(x => x._docId === annivId);
+  if (!a) return;
+  const memo = buildAnnivMemo(a);
+  if (!memo) { showToast('無法建立備忘'); return; }
+
+  const dup = (window.memos || []).find(m =>
+    m.source === 'anniversary' && m.meta?.annivId === annivId && m.meta?.target === memo.meta.target && !m.done
+  );
+  if (dup) { showToast('此提醒已存在備忘清單中'); return; }
+
+  try {
+    await window.saveMemoToFirestore(memo);
+    showToast('已加入備忘 ✓');
+  } catch (e) { console.error(e); showToast('儲存失敗'); }
+}
+
+function buildAnnivMemo(a) {
+  const next = getNextOccurrence(a);
+  if (!next) return null;
+  const days = calcAnnivDaysLeft(a);
+  const dateStr = `${next.getFullYear()}/${String(next.getMonth()+1).padStart(2,'0')}/${String(next.getDate()).padStart(2,'0')}`;
+  const icon = ANNIV_ICONS[a.type] || '📅';
+  const giftHint = a.gift === 'yes' ? ' 🎁 需準備禮物' : '';
+  const lunarHint = a.calendar === 'lunar' ? `（農曆${a.lunarMonth}/${a.lunarDay}）` : '';
+
+  const content = `${icon} ${a.title} · ${dateStr}${lunarHint}（${annivDaysLabel(days)}）${giftHint}`;
+  const priority = days <= 7 ? 'high' : (days <= (a.remindDays || 7) ? 'med' : 'low');
+  const tags = ['紀念日'];
+  if (a.gift === 'yes') tags.push('購物');
+  if (a.type === 'birthday') tags.push('家庭');
+
+  return {
+    content,
+    type: 'remind',
+    priority,
+    tags,
+    note: a.note || '自動同步自紀念日提醒',
+    done: false,
+    source: 'anniversary',
+    meta: { annivId: a._docId, target: dateStr },
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+}
+
+async function syncUrgentAnnivToMemo() {
+  const all = window.anniversaries || [];
+  if (all.length === 0) { showToast('尚未設定任何紀念日'); return; }
+
+  const urgent = all.filter(a => {
+    const days = calcAnnivDaysLeft(a);
+    return days !== null && days >= 0 && days <= (a.remindDays || 7);
+  });
+
+  if (urgent.length === 0) {
+    showToast('沒有即將到來的紀念日（在提前提醒範圍內）');
+    return;
+  }
+
+  if (!confirm(`找到 ${urgent.length} 個即將到來的紀念日，全部加入備忘錄？\n（已存在的會自動跳過）`)) return;
+
+  let added = 0, skipped = 0;
+  for (const a of urgent) {
+    const memo = buildAnnivMemo(a);
+    if (!memo) continue;
+    const dup = (window.memos || []).find(m =>
+      m.source === 'anniversary' && m.meta?.annivId === a._docId && m.meta?.target === memo.meta.target && !m.done
+    );
+    if (dup) { skipped++; continue; }
+    try { await window.saveMemoToFirestore(memo); added++; } catch (e) { console.error(e); }
+  }
+  showToast(`新增 ${added} 筆，跳過 ${skipped} 筆 ✓`);
+}
+
+// 暴露給 onclick 使用
+window.selectType = selectType;
+window.selectPriority = selectPriority;
+window.saveNewMemo = saveNewMemo;
+window.clearNewForm = clearNewForm;
+window.parsePastedText = parsePastedText;
+window.saveParseItems = saveParseItems;
+window.toggleAllParse = toggleAllParse;
+window.exportData = exportData;
+window.exportText = exportText;
+window.clearAllDone = clearAllDone;
+window.addGarageAlertToMemo = addGarageAlertToMemo;
+window.syncAllAlertsToMemo = syncAllAlertsToMemo;
+window.showAnnivForm = showAnnivForm;
+window.hideAnnivForm = hideAnnivForm;
+window.selectAnnivType = selectAnnivType;
+window.selectGift = selectGift;
+window.saveAnniversary = saveAnniversary;
+window.deleteAnniversary = deleteAnniversary;
+window.syncUrgentAnnivToMemo = syncUrgentAnnivToMemo;
+
+renderList();
+</script>
+
+</body>
+</html>
