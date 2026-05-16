@@ -546,7 +546,9 @@ body {
 
       <div class="btn-row">
         <button class="btn" onclick="parsePastedText()">⚡ 開始辨識</button>
+        <button class="btn secondary" onclick="document.getElementById('uploadTxt').click()">📁 上傳 TXT 檔</button>
         <button class="btn secondary" onclick="document.getElementById('pasteInput').value=''; document.getElementById('parseResult').style.display='none';">清空</button>
+        <input type="file" id="uploadTxt" accept=".txt,.md,text/plain,text/markdown" style="display:none;" onchange="handleTxtUpload(event)">
       </div>
 
       <div class="parse-result" id="parseResult" style="display: none;">
@@ -940,6 +942,43 @@ function clearNewForm() {
   selectType('todo');
   selectPriority('med');
   renderTags();
+}
+
+function handleTxtUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // 檢查檔案大小（限制 2MB）
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('檔案太大（超過 2MB）');
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result;
+    const existing = document.getElementById('pasteInput').value.trim();
+
+    if (existing) {
+      // 已有內容：問是否覆蓋或附加
+      if (confirm(`已有內容，要將檔案內容附加到後面嗎？\n（取消＝直接覆蓋）`)) {
+        document.getElementById('pasteInput').value = existing + '\n\n' + text;
+      } else {
+        document.getElementById('pasteInput').value = text;
+      }
+    } else {
+      document.getElementById('pasteInput').value = text;
+    }
+
+    showToast(`已載入 ${file.name} (${Math.round(file.size/1024)} KB) ✓`);
+    event.target.value = ''; // 重設讓同檔可重複上傳
+  };
+  reader.onerror = () => {
+    showToast('讀取失敗');
+    event.target.value = '';
+  };
+  reader.readAsText(file, 'UTF-8');
 }
 
 function parsePastedText() {
@@ -2212,6 +2251,7 @@ window.selectPriority = selectPriority;
 window.saveNewMemo = saveNewMemo;
 window.clearNewForm = clearNewForm;
 window.parsePastedText = parsePastedText;
+window.handleTxtUpload = handleTxtUpload;
 window.saveParseItems = saveParseItems;
 window.toggleAllParse = toggleAllParse;
 window.exportData = exportData;
