@@ -610,7 +610,9 @@ body {
 
       <div class="btn-row">
         <button class="btn" onclick="saveNewMemo()">✓ 儲存備忘</button>
+        <button class="btn secondary" onclick="document.getElementById('uploadTxtNew').click()">📁 上傳 TXT 檔</button>
         <button class="btn secondary" onclick="clearNewForm()">清空</button>
+        <input type="file" id="uploadTxtNew" accept=".txt,.md,text/plain,text/markdown" style="display:none;" onchange="handleTxtUploadToNew(event)">
       </div>
     </div>
   </section>
@@ -942,6 +944,46 @@ function clearNewForm() {
   selectType('todo');
   selectPriority('med');
   renderTags();
+}
+
+function handleTxtUploadToNew(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('檔案太大（超過 2MB）');
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target.result.trim();
+    if (!text) { showToast('檔案是空的'); event.target.value = ''; return; }
+
+    const existing = document.getElementById('newContent').value.trim();
+    if (existing) {
+      if (!confirm(`「內容」欄位已有文字，要附加在後面嗎？\n（取消＝直接覆蓋）`)) {
+        document.getElementById('newContent').value = text;
+      } else {
+        document.getElementById('newContent').value = existing + '\n\n' + text;
+      }
+    } else {
+      document.getElementById('newContent').value = text;
+    }
+
+    // 智慧判斷：如果備註欄是空的，自動填上檔名（不含副檔名）
+    const noteEl = document.getElementById('newNote');
+    if (!noteEl.value.trim()) {
+      const cleanName = file.name.replace(/\.(txt|md)$/i, '');
+      noteEl.value = `來自檔案: ${cleanName}`;
+    }
+
+    showToast(`已載入 ${file.name} ✓`);
+    event.target.value = '';
+  };
+  reader.onerror = () => { showToast('讀取失敗'); event.target.value = ''; };
+  reader.readAsText(file, 'UTF-8');
 }
 
 function handleTxtUpload(event) {
@@ -2252,6 +2294,7 @@ window.saveNewMemo = saveNewMemo;
 window.clearNewForm = clearNewForm;
 window.parsePastedText = parsePastedText;
 window.handleTxtUpload = handleTxtUpload;
+window.handleTxtUploadToNew = handleTxtUploadToNew;
 window.saveParseItems = saveParseItems;
 window.toggleAllParse = toggleAllParse;
 window.exportData = exportData;
