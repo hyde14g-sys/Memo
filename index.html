@@ -445,6 +445,168 @@ body {
 }
 .preset-fest-chip .check { font-size: 14px; }
 
+/* === REVIEW === */
+.review-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+.review-stat {
+  text-align: center;
+  padding: 8px;
+}
+.review-stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  letter-spacing: 1px;
+  line-height: 1;
+  color: var(--green);
+}
+.review-stat-num.streak { color: var(--accent-2); }
+.review-stat-num.type-todo { color: var(--todo); }
+.review-stat-num.type-idea { color: var(--idea); }
+.review-stat-num.type-remind { color: var(--remind); }
+.review-stat-num.type-note { color: var(--note); }
+.review-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  margin-top: 6px;
+}
+
+.review-group {
+  margin-bottom: 20px;
+}
+.review-group-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--border);
+}
+.review-date-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--accent);
+}
+.review-date-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.review-count-badge {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  padding: 2px 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.review-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+  opacity: 0.9;
+}
+.review-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--green);
+}
+.review-item.type-idea::before { background: var(--idea); }
+.review-item.type-remind::before { background: var(--remind); }
+.review-item.type-note::before { background: var(--note); }
+.review-check-done {
+  width: 20px; height: 20px;
+  background: var(--green);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.review-check-done::after { content: '✓'; color: #000; font-weight: 900; font-size: 13px; }
+.review-check-done:hover { background: var(--accent); }
+.review-body { flex: 1; min-width: 0; }
+.review-content {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  text-decoration: line-through;
+  word-break: break-word;
+}
+.review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+  align-items: center;
+}
+.review-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.review-actions { display: flex; gap: 4px; }
+.review-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-dim);
+}
+.review-empty .icon {
+  font-size: 56px;
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.review-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.review-bar-label {
+  width: 60px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.review-bar-track {
+  flex: 1;
+  background: var(--bg-card-2);
+  height: 16px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.review-bar-fill { height: 100%; transition: width 0.5s; }
+.review-bar-fill.todo { background: var(--todo); }
+.review-bar-fill.idea { background: var(--idea); }
+.review-bar-fill.remind { background: var(--remind); }
+.review-bar-fill.note { background: var(--note); }
+.review-bar-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  width: 30px;
+  text-align: right;
+}
+
 @media (max-width: 600px) {
   .header-inner { padding: 12px 16px; }
   .logo-text { font-size: 18px; }
@@ -485,7 +647,8 @@ body {
   <button class="tab" data-page="new"><span class="tab-num">03</span>手動新增</button>
   <button class="tab" data-page="garage"><span class="tab-num">04</span>🚗 車庫提醒</button>
   <button class="tab" data-page="anniversary"><span class="tab-num">05</span>📅 紀念日</button>
-  <button class="tab" data-page="stats"><span class="tab-num">06</span>統計總覽</button>
+  <button class="tab" data-page="review"><span class="tab-num">06</span>✨ 回顧</button>
+  <button class="tab" data-page="stats"><span class="tab-num">07</span>統計總覽</button>
 </nav>
 
 <main class="main">
@@ -741,6 +904,46 @@ body {
     <div id="annivList"></div>
   </section>
 
+  <section class="page" id="page-review">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">REVIEW</h1>
+        <div class="page-title-zh">回 顧 · 已 完 成 的 事 項</div>
+      </div>
+      <div class="page-meta">累計完成 <span id="reviewTotalCount">0</span> 件</div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, rgba(74,222,128,0.08), rgba(96,165,250,0.06)); border-color: rgba(74,222,128,0.3);">
+      <div id="reviewSummary"></div>
+    </div>
+
+    <div class="filter-bar">
+      <select class="select" id="reviewRange" style="width: auto; min-width: 130px;">
+        <option value="today">今天</option>
+        <option value="week" selected>本週</option>
+        <option value="month">本月</option>
+        <option value="year">今年</option>
+        <option value="all">全部</option>
+      </select>
+      <select class="select" id="reviewType" style="width: auto; min-width: 110px;">
+        <option value="all">全部類型</option>
+        <option value="todo">待辦事項</option>
+        <option value="idea">想法</option>
+        <option value="remind">提醒</option>
+        <option value="note">筆記</option>
+      </select>
+      <select class="select" id="reviewTag" style="width: auto; min-width: 110px;">
+        <option value="all">全部主題</option>
+      </select>
+      <div style="margin-left: auto; display: flex; gap: 8px;">
+        <button class="btn small secondary" onclick="exportReviewText()">📄 匯出</button>
+        <button class="btn small danger" onclick="clearReviewRange()">🗑 清除此區間</button>
+      </div>
+    </div>
+
+    <div id="reviewList"></div>
+  </section>
+
   <section class="page" id="page-stats">
     <div class="page-header">
       <div>
@@ -878,6 +1081,7 @@ document.querySelectorAll('.tab').forEach(tab => {
     if (tab.dataset.page === 'stats') renderStats();
     if (tab.dataset.page === 'garage') renderGarageAlerts();
     if (tab.dataset.page === 'anniversary') renderAnnivPage();
+    if (tab.dataset.page === 'review') renderReviewPage();
   });
 });
 
@@ -1336,7 +1540,11 @@ async function toggleDone(id) {
   const memo = window.memos.find(m => m._docId === id);
   if (!memo) return;
   try {
-    await window.updateMemoInFirestore(id, { done: !memo.done, updatedAt: Date.now() });
+    const newDone = !memo.done;
+    const update = { done: newDone, updatedAt: Date.now() };
+    // 標記完成時記錄時間，取消完成時保留紀錄但加上重新打開的時間
+    if (newDone) update.completedAt = Date.now();
+    await window.updateMemoInFirestore(id, update);
   } catch (e) { console.error(e); showToast('更新失敗'); }
 }
 
@@ -1484,6 +1692,7 @@ window.onDataChanged = () => {
   if (document.getElementById('page-stats').classList.contains('active')) renderStats();
   if (document.getElementById('page-garage').classList.contains('active')) renderGarageAlerts();
   if (document.getElementById('page-anniversary').classList.contains('active')) renderAnnivList();
+  if (document.getElementById('page-review').classList.contains('active')) renderReviewPage();
 };
 
 window.onGarageChanged = () => {
@@ -2287,6 +2496,315 @@ async function syncUrgentAnnivToMemo() {
   showToast(`新增 ${added} 筆，跳過 ${skipped} 筆 ✓`);
 }
 
+// ============================================
+// === 回顧頁 ===
+// ============================================
+function getRangeStart(range) {
+  const now = new Date();
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  if (range === 'today') return d.getTime();
+  if (range === 'week') {
+    // 本週一為起點
+    const day = d.getDay() || 7;
+    d.setDate(d.getDate() - (day - 1));
+    return d.getTime();
+  }
+  if (range === 'month') {
+    d.setDate(1);
+    return d.getTime();
+  }
+  if (range === 'year') {
+    d.setMonth(0, 1);
+    return d.getTime();
+  }
+  return 0; // all
+}
+
+function getReviewItems() {
+  const range = document.getElementById('reviewRange')?.value || 'week';
+  const fType = document.getElementById('reviewType')?.value || 'all';
+  const fTag = document.getElementById('reviewTag')?.value || 'all';
+  const startTs = getRangeStart(range);
+
+  const all = window.memos || [];
+  return all.filter(m => {
+    if (!m.done) return false;
+    const ts = m.completedAt || m.updatedAt || m.createdAt || 0;
+    if (ts < startTs) return false;
+    if (fType !== 'all' && m.type !== fType) return false;
+    if (fTag !== 'all' && !(m.tags || []).includes(fTag)) return false;
+    return true;
+  }).sort((a, b) => (b.completedAt || b.updatedAt || 0) - (a.completedAt || a.updatedAt || 0));
+}
+
+// 計算連續完成天數（從今天往回算）
+function calcStreak() {
+  const all = window.memos || [];
+  const dones = all.filter(m => m.done && (m.completedAt || m.updatedAt));
+  if (dones.length === 0) return 0;
+
+  // 取出每筆完成日的「日期字串」集合
+  const dateSet = new Set();
+  dones.forEach(m => {
+    const t = m.completedAt || m.updatedAt;
+    const d = new Date(t);
+    dateSet.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+  });
+
+  // 從今天往回找連續
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    if (dateSet.has(key)) {
+      streak++;
+    } else {
+      // 容許今天還沒完成（i=0 沒紀錄時不中斷，從昨天算）
+      if (i === 0) continue;
+      break;
+    }
+  }
+  return streak;
+}
+
+function renderReviewPage() {
+  const all = window.memos || [];
+  const allDone = all.filter(m => m.done);
+  document.getElementById('reviewTotalCount').textContent = allDone.length;
+
+  // 更新主題篩選器
+  updateReviewTagFilter();
+
+  // Summary 區
+  const items = getReviewItems();
+  const rangeLabel = {
+    today: '今天', week: '本週', month: '本月', year: '今年', all: '全部'
+  }[document.getElementById('reviewRange')?.value || 'week'];
+
+  const typeCount = { todo: 0, idea: 0, remind: 0, note: 0 };
+  items.forEach(m => { typeCount[m.type] = (typeCount[m.type] || 0) + 1; });
+  const totalInRange = items.length;
+
+  const streak = calcStreak();
+
+  // 比例條
+  let barsHtml = '';
+  if (totalInRange > 0) {
+    const types = [
+      { key: 'todo', label: '待辦', count: typeCount.todo },
+      { key: 'idea', label: '想法', count: typeCount.idea },
+      { key: 'remind', label: '提醒', count: typeCount.remind },
+      { key: 'note', label: '筆記', count: typeCount.note }
+    ].filter(t => t.count > 0);
+    barsHtml = types.map(t => `
+      <div class="review-bar-row">
+        <div class="review-bar-label">${t.label}</div>
+        <div class="review-bar-track">
+          <div class="review-bar-fill ${t.key}" style="width: ${t.count/totalInRange*100}%"></div>
+        </div>
+        <div class="review-bar-num">${t.count}</div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('reviewSummary').innerHTML = `
+    <div style="font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px; color: var(--green); margin-bottom: 14px;">
+      ${rangeLabel.toUpperCase()} ACHIEVEMENT
+    </div>
+    <div class="review-summary-grid">
+      <div class="review-stat">
+        <div class="review-stat-num">${totalInRange}</div>
+        <div class="review-stat-label">${rangeLabel}完成</div>
+      </div>
+      <div class="review-stat">
+        <div class="review-stat-num streak">${streak}</div>
+        <div class="review-stat-label">連續天數</div>
+      </div>
+      <div class="review-stat">
+        <div class="review-stat-num type-todo">${typeCount.todo}</div>
+        <div class="review-stat-label">完成待辦</div>
+      </div>
+      <div class="review-stat">
+        <div class="review-stat-num type-remind">${typeCount.remind}</div>
+        <div class="review-stat-label">完成提醒</div>
+      </div>
+    </div>
+    ${barsHtml ? `<div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border);">${barsHtml}</div>` : ''}
+  `;
+
+  renderReviewList(items);
+}
+
+function updateReviewTagFilter() {
+  const fTag = document.getElementById('reviewTag');
+  if (!fTag) return;
+  const current = fTag.value;
+  const tagSet = new Set();
+  (window.memos || []).filter(m => m.done).forEach(m => (m.tags || []).forEach(t => tagSet.add(t)));
+  const tags = Array.from(tagSet).sort();
+  fTag.innerHTML = '<option value="all">全部主題</option>' + tags.map(t => `<option value="${escapeHtml(t)}" ${t===current?'selected':''}>${escapeHtml(t)}</option>`).join('');
+}
+
+function renderReviewList(items) {
+  const list = document.getElementById('reviewList');
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="review-empty">
+      <div class="icon">✨</div>
+      <div>這個區間還沒有完成的事項<br><span style="font-size:12px;color:var(--text-muted);margin-top:4px;display:inline-block;">完成一些備忘後再回來看看</span></div>
+    </div>`;
+    return;
+  }
+
+  // 按日期分組
+  const groups = {};
+  items.forEach(m => {
+    const t = m.completedAt || m.updatedAt;
+    const d = new Date(t);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+
+  const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+  list.innerHTML = '';
+  sortedKeys.forEach(key => {
+    const [y, mo, d] = key.split('-');
+    const dateObj = new Date(+y, +mo - 1, +d);
+    const weekday = ['日','一','二','三','四','五','六'][dateObj.getDay()];
+    const dateLabel = `${mo}/${d}`;
+    const relativeLabel = getRelativeDateLabel(dateObj);
+
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'review-group';
+    groupDiv.innerHTML = `
+      <div class="review-group-title">
+        <span class="review-date-label">${dateLabel}</span>
+        <span class="review-date-sub">週${weekday} · ${relativeLabel}</span>
+        <span class="review-count-badge">${groups[key].length} 件</span>
+      </div>
+      <div class="review-group-items"></div>
+    `;
+    const itemsContainer = groupDiv.querySelector('.review-group-items');
+
+    groups[key].forEach(m => {
+      const typeLabel = { todo: '待辦', idea: '想法', remind: '提醒', note: '筆記' }[m.type] || m.type;
+      const tagsHtml = (m.tags || []).map(t => `<span class="memo-tag">${escapeHtml(t)}</span>`).join('');
+      const timeStr = formatTime(m.completedAt || m.updatedAt);
+      const sourceBadge = m.source === 'paste' ? '📋' : m.source === 'garage' ? '🚗' : m.source === 'anniversary' ? '📅' : '';
+
+      const div = document.createElement('div');
+      div.className = 'review-item type-' + m.type;
+      div.innerHTML = `
+        <div class="review-check-done" title="取消完成（拉回主清單）" data-id="${m._docId}"></div>
+        <div class="review-body">
+          <div class="review-content">${escapeHtml(m.content)}</div>
+          <div class="review-meta">
+            <span class="memo-badge type-${m.type}">${typeLabel}</span>
+            ${tagsHtml}
+            ${sourceBadge ? `<span style="font-size:11px;">${sourceBadge}</span>` : ''}
+            <span class="review-time">完成於 ${timeStr}</span>
+          </div>
+        </div>
+        <div class="review-actions">
+          <button class="icon-btn danger" title="永久刪除" data-act="del" data-id="${m._docId}">✕</button>
+        </div>
+      `;
+      itemsContainer.appendChild(div);
+    });
+    list.appendChild(groupDiv);
+  });
+
+  list.querySelectorAll('.review-check-done').forEach(el => {
+    el.onclick = () => toggleDone(el.dataset.id);
+  });
+  list.querySelectorAll('[data-act="del"]').forEach(el => {
+    el.onclick = () => deleteMemo(el.dataset.id);
+  });
+}
+
+function getRelativeDateLabel(d) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const target = new Date(d);
+  target.setHours(0,0,0,0);
+  const diff = Math.round((today - target) / 86400000);
+  if (diff === 0) return '今天';
+  if (diff === 1) return '昨天';
+  if (diff === 2) return '前天';
+  if (diff < 7) return `${diff} 天前`;
+  if (diff < 30) return `${Math.floor(diff/7)} 週前`;
+  if (diff < 365) return `${Math.floor(diff/30)} 個月前`;
+  return `${Math.floor(diff/365)} 年前`;
+}
+
+function exportReviewText() {
+  const items = getReviewItems();
+  if (items.length === 0) { showToast('沒有可匯出的項目'); return; }
+
+  const rangeLabel = {
+    today: '今天', week: '本週', month: '本月', year: '今年', all: '全部'
+  }[document.getElementById('reviewRange').value];
+
+  // 按日期分組
+  const groups = {};
+  items.forEach(m => {
+    const t = m.completedAt || m.updatedAt;
+    const d = new Date(t);
+    const key = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
+  const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+  const labels = { todo: '待辦', idea: '想法', remind: '提醒', note: '筆記' };
+
+  let txt = `回顧紀錄 · ${rangeLabel} · ${formatDate()}\n${'='.repeat(40)}\n共完成 ${items.length} 件\n\n`;
+
+  sortedKeys.forEach(key => {
+    txt += `【${key}】共 ${groups[key].length} 件\n`;
+    groups[key].forEach((m, i) => {
+      const tags = (m.tags || []).length ? ' [' + m.tags.join('·') + ']' : '';
+      txt += `  ${i+1}. ✓ ${m.content}${tags}\n`;
+    });
+    txt += '\n';
+  });
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  downloadBlob(blob, `回顧_${rangeLabel}_${formatDate()}.txt`);
+  showToast('已匯出 ✓');
+}
+
+async function clearReviewRange() {
+  const items = getReviewItems();
+  if (items.length === 0) { showToast('沒有可清除的項目'); return; }
+
+  const rangeLabel = {
+    today: '今天', week: '本週', month: '本月', year: '今年', all: '全部'
+  }[document.getElementById('reviewRange').value];
+
+  if (!confirm(`確定永久刪除「${rangeLabel}」共 ${items.length} 件已完成項目嗎？\n此動作無法復原。`)) return;
+
+  let deleted = 0;
+  for (const m of items) {
+    try {
+      await window.deleteMemoFromFirestore(m._docId);
+      deleted++;
+    } catch (e) { console.error(e); }
+  }
+  showToast(`已刪除 ${deleted} 件 ✓`);
+}
+
+// 篩選變動時觸發
+['reviewRange', 'reviewType', 'reviewTag'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', renderReviewPage);
+});
+
 // 暴露給 onclick 使用
 window.selectType = selectType;
 window.selectPriority = selectPriority;
@@ -2309,6 +2827,8 @@ window.selectGift = selectGift;
 window.saveAnniversary = saveAnniversary;
 window.deleteAnniversary = deleteAnniversary;
 window.syncUrgentAnnivToMemo = syncUrgentAnnivToMemo;
+window.exportReviewText = exportReviewText;
+window.clearReviewRange = clearReviewRange;
 
 renderList();
 </script>
