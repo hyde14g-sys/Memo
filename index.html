@@ -975,6 +975,7 @@ body {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // 沿用 gogostar2 專案，與車庫、訂單共用同一個 Firebase
@@ -989,6 +990,47 @@ body {
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
+  // ── Google 登入（只允許家人帳號）──────────────────────────────
+  const ALLOWED_EMAILS = ['hyde14g@gmail.com', 'twotwo5410@gmail.com'];
+  const auth = getAuth(app);
+  await new Promise(resolve => {
+    let done = false;
+    const ov = document.createElement('div');
+    ov.id = 'authGate';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0f0f13;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;font-family:"Noto Sans TC",sans-serif;color:#e8e8f0;text-align:center';
+    ov.innerHTML = '<div style="font-size:1.4rem;font-weight:900;color:#f5c542">🔒 請先登入</div>'
+      + '<div id="authMsg" style="font-size:0.9rem;color:#7070a0">只限授權的 Google 帳號使用</div>'
+      + '<button id="authBtn" style="padding:12px 28px;border-radius:10px;border:none;background:#f5c542;color:#111;font-size:1rem;font-weight:700;cursor:pointer">使用 Google 登入</button>';
+    document.body.appendChild(ov);
+    const msg = ov.querySelector('#authMsg');
+    ov.querySelector('#authBtn').onclick = async () => {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) {
+          await signInWithRedirect(auth, provider);
+        } else if (!(e && e.code === 'auth/popup-closed-by-user')) {
+          msg.textContent = '登入失敗：' + (e && e.message ? e.message : e);
+        }
+      }
+    };
+    onAuthStateChanged(auth, user => {
+      if (done) return;
+      if (user && ALLOWED_EMAILS.includes((user.email || '').toLowerCase())) {
+        done = true;
+        ov.remove();
+        resolve();
+      } else if (user) {
+        msg.textContent = '⚠️ ' + user.email + ' 沒有使用權限，請換帳號登入';
+        msg.style.color = '#fb7185';
+        signOut(auth);
+      }
+    });
+  });
+
 
   const memosQ = query(collection(db, "memo_items"), orderBy("createdAt", "desc"));
   onSnapshot(memosQ, (snapshot) => {
