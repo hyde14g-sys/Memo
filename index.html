@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MEMO LAB v2.2 / 對話備忘錄</title>
+<title>MEMO LAB v2.3 / 對話備忘錄</title>
 
 <meta name="theme-color" content="#0e0f10">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -641,6 +641,20 @@ body {
   .filter-bar select { flex: 1; }
 }
 </style>
+
+<style>
+  #snakeLogin { position:fixed; inset:0; z-index:100000; background:rgba(8,9,10,.96); display:flex; align-items:center; justify-content:center; padding:16px; }
+  #snakeLoginForm { width:100%; max-width:340px; background:#16181a; border:1px solid #3a4046; border-top:3px solid #f5d547; border-radius:6px; padding:28px 24px; display:flex; flex-direction:column; gap:12px; }
+  #snakeLoginForm .sl-title { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:3px; color:#e8e6e1; }
+  #snakeLoginForm .sl-sub { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; color:#8a8f96; margin-bottom:6px; }
+  #snakeLoginForm input { background:#0e0f10; border:1px solid #2a2e33; color:#e8e6e1; padding:12px; border-radius:4px; font-size:15px; }
+  #snakeLoginForm input:focus { outline:none; border-color:#f5d547; }
+  #snakeLoginForm button { background:#f5d547; color:#000; border:0; border-radius:4px; padding:12px; font-size:15px; font-weight:700; letter-spacing:2px; cursor:pointer; }
+  #snakeLoginForm button:disabled { opacity:.6; }
+  #slErr { color:#ff4d2e; font-size:13px; min-height:18px; }
+  #snakeLogout { position:fixed; right:12px; bottom:12px; z-index:9999; background:#16181a; color:#8a8f96; border:1px solid #2a2e33; border-radius:4px; padding:6px 10px; font-size:11px; cursor:pointer; opacity:.7; }
+  #snakeLogout:hover { opacity:1; color:#e8e6e1; }
+</style>
 </head>
 <body>
 
@@ -1015,7 +1029,8 @@ body {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // 沿用 gogostar2 專案，與車庫、訂單共用同一個 Firebase
   const firebaseConfig = {
@@ -1030,6 +1045,52 @@ body {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // ── 登入（網頁版）：帳密不寫在檔案裡，登入一次後瀏覽器會記住 ──────────
+  const auth = getAuth(app);
+  try { await setPersistence(auth, browserLocalPersistence); } catch (_) {}
+  await new Promise(resolve => {
+    const off = onAuthStateChanged(auth, user => {
+      if (user) {
+        off();
+        const el = document.getElementById('snakeLogin'); if (el) el.remove();
+        const lo = document.createElement('button');
+        lo.id = 'snakeLogout'; lo.textContent = '登出 · ' + (user.email || '');
+        lo.onclick = () => { if (confirm('確定登出？')) signOut(auth).then(() => location.reload()); };
+        document.body.appendChild(lo);
+        resolve();
+        return;
+      }
+      if (document.getElementById('snakeLogin')) return;
+      const box = document.createElement('div');
+      box.id = 'snakeLogin';
+      box.innerHTML = `
+        <form id="snakeLoginForm">
+          <div class="sl-title">MEMO LAB</div>
+          <div class="sl-sub">請先登入 · FIREBASE GOGOSTAR2</div>
+          <input type="email" id="slEmail" placeholder="Email" autocomplete="username" required>
+          <input type="password" id="slPw" placeholder="密碼" autocomplete="current-password" required>
+          <button type="submit" id="slBtn">登入</button>
+          <div id="slErr"></div>
+        </form>`;
+      document.body.appendChild(box);
+      document.getElementById('snakeLoginForm').onsubmit = async ev => {
+        ev.preventDefault();
+        const btn = document.getElementById('slBtn'), err = document.getElementById('slErr');
+        btn.disabled = true; btn.textContent = '登入中…'; err.textContent = '';
+        try {
+          await signInWithEmailAndPassword(auth, document.getElementById('slEmail').value.trim(), document.getElementById('slPw').value);
+        } catch (e) {
+          const c = e.code || '';
+          err.textContent = /invalid-credential|wrong-password|user-not-found|invalid-email/.test(c) ? '帳號或密碼錯誤'
+            : /too-many-requests/.test(c) ? '嘗試太多次，請稍後再試'
+            : /network/.test(c) ? '網路連不上 Firebase'
+            : '登入失敗：' + c;
+          btn.disabled = false; btn.textContent = '登入';
+        }
+      };
+    });
+  });
+
   const memosQ = query(collection(db, "memo_items"), orderBy("createdAt", "desc"));
   onSnapshot(memosQ, (snapshot) => {
     window.memos = snapshot.docs.map(d => ({ ...d.data(), _docId: d.id }));
@@ -1038,7 +1099,7 @@ body {
     if (typeof window.onDataChanged === 'function') window.onDataChanged();
   }, (err) => {
     console.error(err);
-    document.getElementById('dbStatus').textContent = 'OFFLINE';
+    document.getElementById('dbStatus').textContent = /permission/i.test(err.code || err.message) ? '沒有權限 · 請重新登入' : 'OFFLINE · ' + (err.code || '');
   });
 
   // 同步車庫資料（跨應用整合）
