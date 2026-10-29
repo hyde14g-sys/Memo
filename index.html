@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MEMO LAB / 對話備忘錄</title>
+<title>MEMO LAB v2.2 / 對話備忘錄</title>
 
 <meta name="theme-color" content="#0e0f10">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -445,6 +445,25 @@ body {
 }
 .preset-fest-chip .check { font-size: 14px; }
 
+/* === v2.0 HUD 今日 / 日期 === */
+.hud-rule { font-size: 12px; color: var(--text-dim); line-height: 1.7; padding: 10px 14px; border: 1px dashed var(--border-bright); border-radius: 6px; margin-bottom: 14px; }
+.hud-ev { display: flex; align-items: center; gap: 12px; background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--blue); border-radius: 6px; padding: 14px; margin-bottom: 10px; }
+.hud-ev.today { border-left-color: var(--accent); }
+.hud-ev.overdue { border-left-color: var(--accent-2); background: rgba(255,77,46,0.06); }
+.hud-ev-when { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--accent); width: 92px; flex-shrink: 0; }
+.hud-ev.overdue .hud-ev-when { color: var(--accent-2); }
+.hud-ev-body { flex: 1; min-width: 0; }
+.hud-ev-title { font-size: 15px; font-weight: 700; word-break: break-word; }
+.hud-ev-sub { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+.hud-ev-btn { flex-shrink: 0; min-width: 88px; min-height: 52px; font-size: 15px; font-weight: 700; background: var(--green); color: #000; border: 0; border-radius: 6px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; }
+.hud-ev-btn:hover { background: var(--accent); }
+.hud-ev-btn:disabled { opacity: .5; }
+.due-badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 3px; background: rgba(96,165,250,0.15); color: var(--blue); }
+.due-badge.hot { background: rgba(255,77,46,0.18); color: var(--accent-2); }
+.parse-date { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 3px 6px; border-radius: 3px; font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+.gv-alert-action.ack { border-color: var(--green); color: var(--green); }
+.gv-alert-action.ack:hover { background: var(--green); color: #000; }
+
 /* === REVIEW === */
 .review-summary-grid {
   display: grid;
@@ -642,6 +661,7 @@ body {
 </header>
 
 <nav class="tabs">
+  <button class="tab" data-page="hud"><span class="tab-num">00</span>🛰 HUD 今日</button>
   <button class="tab active" data-page="list"><span class="tab-num">01</span>備忘清單</button>
   <button class="tab" data-page="paste"><span class="tab-num">02</span>對話貼上</button>
   <button class="tab" data-page="new"><span class="tab-num">03</span>手動新增</button>
@@ -652,6 +672,18 @@ body {
 </nav>
 
 <main class="main">
+
+  <section class="page" id="page-hud">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">HUD TODAY</h1>
+        <div class="page-title-zh">H U D 正 在 顯 示 的 事 件</div>
+      </div>
+      <div class="page-meta">共 <span id="hudEvCount">0</span> 件</div>
+    </div>
+    <div class="hud-rule">今天＋未來 2 天的事件 · 保養到期前 15 天 · 驗車到期前 30 天<br>按「確認」後，HUD 右上角就不會再顯示</div>
+    <div id="hudEvList"></div>
+  </section>
 
   <section class="page active" id="page-list">
     <div class="page-header">
@@ -750,6 +782,14 @@ body {
       <div class="field">
         <div class="label">CONTENT / 內容</div>
         <textarea class="textarea" id="newContent" placeholder="寫下備忘內容..."></textarea>
+      </div>
+
+      <div class="field">
+        <div class="label">WHEN / 預計發生時間（有填才會上 HUD）</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <input type="date" class="input" id="newDueDate">
+          <input type="time" class="input" id="newDueTime" placeholder="時間（選填）">
+        </div>
       </div>
 
       <div class="field">
@@ -975,8 +1015,7 @@ body {
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // 沿用 gogostar2 專案，與車庫、訂單共用同一個 Firebase
   const firebaseConfig = {
@@ -990,47 +1029,6 @@ body {
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-
-  // ── Google 登入（只允許家人帳號）──────────────────────────────
-  const ALLOWED_EMAILS = ['hyde14g@gmail.com', 'twotwo5410@gmail.com'];
-  const auth = getAuth(app);
-  await new Promise(resolve => {
-    let done = false;
-    const ov = document.createElement('div');
-    ov.id = 'authGate';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:999999;background:#0f0f13;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;font-family:"Noto Sans TC",sans-serif;color:#e8e8f0;text-align:center';
-    ov.innerHTML = '<div style="font-size:1.4rem;font-weight:900;color:#f5c542">🔒 請先登入</div>'
-      + '<div id="authMsg" style="font-size:0.9rem;color:#7070a0">只限授權的 Google 帳號使用</div>'
-      + '<button id="authBtn" style="padding:12px 28px;border-radius:10px;border:none;background:#f5c542;color:#111;font-size:1rem;font-weight:700;cursor:pointer">使用 Google 登入</button>';
-    document.body.appendChild(ov);
-    const msg = ov.querySelector('#authMsg');
-    ov.querySelector('#authBtn').onclick = async () => {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (e) {
-        if (e && (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment')) {
-          await signInWithRedirect(auth, provider);
-        } else if (!(e && e.code === 'auth/popup-closed-by-user')) {
-          msg.textContent = '登入失敗：' + (e && e.message ? e.message : e);
-        }
-      }
-    };
-    onAuthStateChanged(auth, user => {
-      if (done) return;
-      if (user && ALLOWED_EMAILS.includes((user.email || '').toLowerCase())) {
-        done = true;
-        ov.remove();
-        resolve();
-      } else if (user) {
-        msg.textContent = '⚠️ ' + user.email + ' 沒有使用權限，請換帳號登入';
-        msg.style.color = '#fb7185';
-        signOut(auth);
-      }
-    });
-  });
-
 
   const memosQ = query(collection(db, "memo_items"), orderBy("createdAt", "desc"));
   onSnapshot(memosQ, (snapshot) => {
@@ -1060,6 +1058,13 @@ body {
     if (typeof window.onAnnivChanged === 'function') window.onAnnivChanged();
   }, (err) => console.warn('memo_anniversaries 讀取失敗:', err.message));
 
+  // v2.0：事件確認紀錄（車庫驗車/保養、紀念日）── HUD 上確認後就不再顯示
+  onSnapshot(collection(db, "memo_event_acks"), (snap) => {
+    window.eventAcks = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+    if (typeof window.onAcksChanged === 'function') window.onAcksChanged();
+  }, (err) => console.warn('memo_event_acks 讀取失敗:', err.message));
+  window.ackEventInFirestore = async (key, data) => await setDoc(doc(db, "memo_event_acks", key), data);
+
   window.saveAnnivToFirestore = async (a) => await addDoc(collection(db, "memo_anniversaries"), a);
   window.updateAnnivInFirestore = async (docId, data) => await updateDoc(doc(db, "memo_anniversaries", docId), data);
   window.deleteAnnivFromFirestore = async (docId) => await deleteDoc(doc(db, "memo_anniversaries", docId));
@@ -1078,6 +1083,149 @@ body {
 </script>
 
 <script>
+/* ===== SNAKE EVENTS CORE v1.2（memo 網頁 / HUD 共用，兩邊要一致） ===== */
+const EV_CFG = {
+  DAYS_AHEAD: 2,    // HUD 顯示：今天 + 未來 2 天
+  MAX_HUD: 3,       // HUD 右上最多幾筆
+  MAINT_LEAD: 15,   // 保養：到期前 15 天開始顯示
+  INSP_LEAD: 30     // 驗車：到期前 30 天開始顯示
+};
+function evP2(n){ return String(n).padStart(2,'0'); }
+function evYmd(d){ return `${d.getFullYear()}-${evP2(d.getMonth()+1)}-${evP2(d.getDate())}`; }
+function evParseYmd(s){
+  if(!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(!m) return null;
+  return new Date(+m[1], +m[2]-1, +m[3]);
+}
+function evDaysUntil(ymd){
+  const d = evParseYmd(ymd); if(!d) return null;
+  const t = new Date(); t.setHours(0,0,0,0);
+  return Math.round((d - t) / 86400000);
+}
+function evAckKey(kind, id, target){ return `${kind}__${id}__${target}`.replace(/[\/\s#?]/g,'-'); }
+function evAckOf(acks, key){ return (acks||[]).find(a => a._docId === key || a.key === key) || null; }
+function evAcked(acks, key){ return !!evAckOf(acks, key); }
+// 處理狀態：'done' 已完成 / 'mute' 不提醒 / '' 未處理（舊版確認沒有 status，當作已完成）
+function evAckState(acks, key){ const a = evAckOf(acks, key); return a ? (a.status || 'done') : ''; }
+// 下次保養（跟車庫網頁同一個規則）：
+//  1. 車輛有「預計保養日」，而且設定之後還沒有新的保養紀錄 → 用預計保養日
+//  2. 否則用該車最新一筆保養紀錄的「下次保養日期 / 里程」
+function evNextMaint(v, records){
+  const vid = v.id || v._docId;
+  const latest = (records||[])
+    .filter(r => r.vehicleId === vid)
+    .sort((a,b) => (b.serviceDate||'').localeCompare(a.serviceDate||''))[0] || null;
+  const planOk = !!v.plannedMaintDate &&
+    !(latest && v.plannedMaintSetAt && (latest.serviceDate||'') >= v.plannedMaintSetAt);
+  if (planOk) return { date: v.plannedMaintDate, mileage: '', planned: true };
+  if (latest && (latest.nextDate || latest.nextMileage))
+    return { date: latest.nextDate || '', mileage: latest.nextMileage || '', planned: false };
+  return null;
+}
+function evVName(v){ return v.nickname || v.model || v.brand || v.plate || '車輛'; }
+
+// 車庫提醒：保養 15 天內、驗車 30 天內（含逾期），沒確認就一直在
+function evGarageAlerts(vehicles, records, acks, incl){
+  const out = [];
+  (vehicles||[]).forEach(v => {
+    const vid = v.id || v._docId;
+    if (v.nextInspection){
+      const days = evDaysUntil(v.nextInspection);
+      const key = evAckKey('insp', vid, v.nextInspection);
+      const state = evAckState(acks, key);
+      if (days !== null && days <= EV_CFG.INSP_LEAD && (incl || !state))
+        out.push({ src:'garage', kind:'inspection', key, state, vehicleId:vid, date:v.nextInspection, time:'', days,
+                   title:`${evVName(v)} 驗車`, tag:'驗車' });
+    }
+    const r = evNextMaint(v, records);
+    if (r && r.date){
+      const days = evDaysUntil(r.date);
+      const key = evAckKey('maint', vid, r.date);
+      const state = evAckState(acks, key);
+      if (days !== null && days <= EV_CFG.MAINT_LEAD && (incl || !state))
+        out.push({ src:'garage', kind:'maintenance', key, state, vehicleId:vid, date:r.date, time:'', days,
+                   title:`${evVName(v)} 保養`, tag: r.planned ? '預計保養' : '保養' });
+    }
+  });
+  return out;
+}
+
+// memo 事件：有 dueDate、未完成，今天~2 天內（逾期未完成也顯示）
+function evMemoEvents(memos, acks, daysAhead, incl){
+  const out = [];
+  (memos||[]).forEach(m => {
+    if (!m.dueDate) return;
+    const days = evDaysUntil(m.dueDate);
+    if (days === null || days > daysAhead) return;
+    if (m.done && days < 0) return;                       // 過去已完成的不用再列
+    const key = evAckKey('memo', m._docId, m.dueDate);     // 不提醒：改日期後會再出現
+    const state = m.done ? 'done' : evAckState(acks, key);
+    if (state && !incl) return;
+    out.push({ src:'memo', key, state, id:m._docId, date:m.dueDate, time:m.dueTime||'', days,
+               title:m.content, tag:'' });
+  });
+  return out;
+}
+
+// 紀念日：今天~2 天內，確認過的不顯示
+function evAnnivEvents(annivs, acks, getNext, daysAhead, incl){
+  const out = [];
+  if (typeof getNext !== 'function') return out;
+  (annivs||[]).forEach(a => {
+    const d = getNext(a); if(!d) return;
+    const ymd = evYmd(d);
+    const days = evDaysUntil(ymd);
+    if (days === null || days < 0 || days > daysAhead) return;
+    const key = evAckKey('anniv', a._docId, ymd);
+    const state = evAckState(acks, key);
+    if (state && !incl) return;
+    out.push({ src:'anniv', key, state, id:a._docId, date:ymd, time:'', days, title:a.title, tag:'紀念日' });
+  });
+  return out;
+}
+
+function evCollect(data, getNext, opt){
+  const daysAhead = (opt && opt.daysAhead !== undefined) ? opt.daysAhead : EV_CFG.DAYS_AHEAD;
+  const incl = !!(opt && opt.includeHandled);   // 行事曆頁要連已處理的一起列（可以復原）
+  const list = [
+    ...evMemoEvents(data.memos, data.acks, daysAhead, incl),
+    ...evAnnivEvents(data.annivs, data.acks, getNext, daysAhead, incl),
+    ...evGarageAlerts(data.vehicles, data.records, data.acks, incl)
+  ];
+  list.sort((a,b) => (a.days - b.days) || (a.time||'99').localeCompare(b.time||'99'));
+  return list;
+}
+
+function evWhenLabel(e){
+  if (e.days < 0) return `逾期${-e.days}天`;
+  if (e.days === 0) return e.time ? `今天 ${e.time}` : '今天';
+  if (e.days === 1) return e.time ? `明天 ${e.time}` : '明天';
+  if (e.days === 2) return e.time ? `後天 ${e.time}` : '後天';
+  const d = evParseYmd(e.date);
+  return `${evP2(d.getMonth()+1)}/${evP2(d.getDate())}·剩${e.days}天`;
+}
+/* ===== /SNAKE EVENTS CORE ===== */
+
+// 文字裡找日期：2026/10/29、2026-10-29、2026年10月29日、10/29、10月29日；時間 14:00
+function evDetectDate(text){
+  if (!text) return null;
+  let y, m, d, r;
+  r = String(text).match(/(20\d{2})\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})/);
+  if (r) { y = +r[1]; m = +r[2]; d = +r[3]; }
+  else {
+    r = String(text).match(/(?<![\d\/.])(\d{1,2})\s*[\/月]\s*(\d{1,2})(?![\d\/])/);
+    if (r) {
+      m = +r[1]; d = +r[2];
+      const now = new Date(); y = now.getFullYear();
+      if ((now - new Date(y, m - 1, d)) / 86400000 > 60) y++;  // 已過 60 天以上 → 當成明年
+    }
+  }
+  if (!m || m < 1 || m > 12 || !d || d < 1 || d > 31) return null;
+  const t = String(text).match(/(?<!\d)([01]?\d|2[0-3])[:：]([0-5]\d)(?!\d)/);
+  return { date: `${y}-${evP2(m)}-${evP2(d)}`, time: t ? `${evP2(+t[1])}:${t[2]}` : '' };
+}
+window.eventAcks = [];
 window.memos = [];
 window.garageVehicles = [];
 window.garageRecords = [];
@@ -1166,6 +1314,8 @@ async function saveNewMemo() {
     priority: currentPriority,
     tags: Array.from(selectedTags),
     note: document.getElementById('newNote').value.trim(),
+    dueDate: document.getElementById('newDueDate').value || '',
+    dueTime: document.getElementById('newDueDate').value ? (document.getElementById('newDueTime').value || '') : '',
     done: false,
     source: 'manual',
     createdAt: Date.now(),
@@ -1186,6 +1336,8 @@ async function saveNewMemo() {
 function clearNewForm() {
   document.getElementById('newContent').value = '';
   document.getElementById('newNote').value = '';
+  document.getElementById('newDueDate').value = '';
+  document.getElementById('newDueTime').value = '';
   selectedTags.clear();
   selectType('todo');
   selectPriority('med');
@@ -1392,6 +1544,8 @@ function buildItem(content, isActionSection) {
     priority: detectPriority(content),
     tags: detectTags(content),
     done: false,
+    dueDate: (evDetectDate(content) || {}).date || '',
+    dueTime: (evDetectDate(content) || {}).time || '',
     selected: true
   };
 }
@@ -1432,6 +1586,7 @@ function renderParseResult() {
     div.innerHTML = `
       <div class="parse-check ${item.selected ? 'checked' : ''}" data-idx="${idx}"></div>
       <div class="parse-text">${escapeHtml(item.content)}${item.tags.length ? ' <span style="color:var(--text-muted);font-size:11px;">[' + item.tags.join('·') + ']</span>' : ''}</div>
+      <input type="date" class="parse-date" data-idx="${idx}" value="${item.dueDate || ''}" title="預計發生日期（有填才上 HUD）">
       <select class="parse-type-select" data-idx="${idx}">
         <option value="todo" ${item.type==='todo'?'selected':''}>待辦</option>
         <option value="idea" ${item.type==='idea'?'selected':''}>想法</option>
@@ -1448,6 +1603,9 @@ function renderParseResult() {
       parseItems[idx].selected = !parseItems[idx].selected;
       el.classList.toggle('checked');
     };
+  });
+  container.querySelectorAll('.parse-date').forEach(el => {
+    el.onchange = () => { parseItems[+el.dataset.idx].dueDate = el.value; };
   });
   container.querySelectorAll('.parse-type-select').forEach(el => {
     el.onchange = () => {
@@ -1478,6 +1636,8 @@ async function saveParseItems() {
         tags: it.tags,
         note: '',
         done: it.done || false,
+        dueDate: it.dueDate || '',
+        dueTime: it.dueDate ? (it.dueTime || '') : '',
         source: 'paste',
         createdAt: Date.now(),
         updatedAt: Date.now()
@@ -1553,6 +1713,7 @@ function renderList() {
           ${priLabel ? `<span class="memo-badge priority-${m.priority}">${priLabel}</span>` : ''}
           ${tagsHtml}
           ${sourceBadge}
+          ${m.dueDate ? `<span class="due-badge ${(!m.done && evDaysUntil(m.dueDate) !== null && evDaysUntil(m.dueDate) <= 0) ? 'hot' : ''}">📅 ${m.dueDate.replace(/-/g,'/')}${m.dueTime ? ' ' + m.dueTime : ''}${m.done ? '' : ' · ' + evWhenLabel({days: evDaysUntil(m.dueDate), date: m.dueDate, time: ''})}</span>` : ''}
           <span class="memo-time">${timeStr}</span>
         </div>
       </div>
@@ -1605,8 +1766,20 @@ async function editMemo(id) {
   if (newContent === null) return;
   const trimmed = newContent.trim();
   if (!trimmed) { showToast('內容不可為空'); return; }
+  const curWhen = memo.dueDate ? (memo.dueDate + (memo.dueTime ? ' ' + memo.dueTime : '')) : '';
+  const whenStr = prompt('預計發生時間（例：2026-10-29 或 2026-10-29 14:00，留空＝不上 HUD）：', curWhen);
+  const upd = { content: trimmed, updatedAt: Date.now() };
+  if (whenStr !== null) {
+    const w = whenStr.trim();
+    if (!w) { upd.dueDate = ''; upd.dueTime = ''; }
+    else {
+      const dt = evDetectDate(w);
+      if (!dt) { showToast('日期格式看不懂，日期沒有變更'); }
+      else { upd.dueDate = dt.date; upd.dueTime = dt.time; }
+    }
+  }
   try {
-    await window.updateMemoInFirestore(id, { content: trimmed, updatedAt: Date.now() });
+    await window.updateMemoInFirestore(id, upd);
     showToast('已更新');
   } catch (e) { console.error(e); showToast('更新失敗'); }
 }
@@ -1774,10 +1947,11 @@ function daysLabel(daysLeft) {
 
 // 取得每台車的「下次保養」資料（從最新一筆保養紀錄）
 function getNextMaintenance(vehicleId) {
-  const records = (window.garageRecords || [])
-    .filter(r => r.vehicleId === vehicleId && (r.nextDate || r.nextMileage))
-    .sort((a, b) => (b.serviceDate || '').localeCompare(a.serviceDate || ''));
-  return records[0] || null;
+  // v2.1：跟車庫網頁同規則（預計保養日優先，有新保養紀錄後改用紀錄）
+  const v = (window.garageVehicles || []).find(x => x.id === vehicleId);
+  const e = v ? evNextMaint(v, window.garageRecords) : null;
+  if (!e) return null;
+  return { nextDate: e.date, nextMileage: e.mileage, planned: e.planned };
 }
 
 // 取得車輛目前里程（取車輛 currentMileage 和最新紀錄 mileage 較大者）
@@ -1839,6 +2013,7 @@ function renderGarageAlerts() {
           </div>
           <span class="gv-alert-days ${inspUrg}">${daysLabel(inspDays)}</span>
           <button class="gv-alert-action" data-vid="${v._docId}" data-kind="inspection" onclick="addGarageAlertToMemo(this)">+ 加入備忘</button>
+          ${garageAckBtn('insp', v.id || v._docId, v.nextInspection, inspDays, EV_CFG.INSP_LEAD, evVName(v) + ' 驗車')}
         </div>
       `);
     }
@@ -1849,11 +2024,12 @@ function renderGarageAlerts() {
         <div class="gv-alert urgency-${maintUrg}">
           <span class="gv-alert-icon">🔧</span>
           <div class="gv-alert-body">
-            <div class="gv-alert-label">NEXT MAINTENANCE 下次保養（日期）</div>
+            <div class="gv-alert-label">NEXT MAINTENANCE ${nextMaint.planned ? '預計保養（車輛設定）' : '下次保養（日期）'}</div>
             <div class="gv-alert-value">${formatDateDisplay(nextMaint.nextDate)}</div>
           </div>
           <span class="gv-alert-days ${maintUrg}">${daysLabel(maintDays)}</span>
           <button class="gv-alert-action" data-vid="${v._docId}" data-kind="maintenance-date" onclick="addGarageAlertToMemo(this)">+ 加入備忘</button>
+          ${garageAckBtn('maint', v.id || v._docId, nextMaint.nextDate, maintDays, EV_CFG.MAINT_LEAD, evVName(v) + ' 保養')}
         </div>
       `);
     }
@@ -2847,6 +3023,79 @@ async function clearReviewRange() {
   if (el) el.addEventListener('change', renderReviewPage);
 });
 
+// ============================================
+// === v2.0 HUD 今日：確認事件 ===
+// ============================================
+function garageAckBtn(kind, vid, target, days, lead, title) {
+  if (!target || days === null || days > lead) return '';
+  const key = evAckKey(kind, vid, target);
+  if (evAcked(window.eventAcks, key)) return '<span class="gv-alert-action added">✓ 已確認</span>';
+  return `<button class="gv-alert-action ack" onclick="ackEvent('${key}','garage','${kind}','${escapeHtml(String(vid))}','${target}', this.dataset.t)" data-t="${escapeHtml(title)}">✓ 確認（HUD 消失）</button>`;
+}
+
+function hudEventList() {
+  return evCollect({
+    memos: window.memos, annivs: window.anniversaries,
+    vehicles: window.garageVehicles, records: window.garageRecords, acks: window.eventAcks
+  }, (typeof getNextOccurrence === 'function') ? getNextOccurrence : null);
+}
+
+function renderHudPage() {
+  const box = document.getElementById('hudEvList');
+  if (!box) return;
+  const list = hudEventList();
+  document.getElementById('hudEvCount').textContent = list.length;
+  if (list.length === 0) {
+    box.innerHTML = '<div class="empty-state"><div class="icon">🛰</div><div class="text">HUD 目前沒有要顯示的事件</div></div>';
+    return;
+  }
+  const srcLabel = { memo: '備忘', anniv: '紀念日', garage: '車庫' };
+  box.innerHTML = list.map((e, i) => `
+    <div class="hud-ev ${e.days < 0 ? 'overdue' : (e.days === 0 ? 'today' : '')}">
+      <div class="hud-ev-when">${evWhenLabel(e)}</div>
+      <div class="hud-ev-body">
+        <div class="hud-ev-title">${escapeHtml(e.title)}</div>
+        <div class="hud-ev-sub">${srcLabel[e.src] || ''}${(e.tag && e.tag !== srcLabel[e.src]) ? ' · ' + e.tag : ''} · ${e.date.replace(/-/g,'/')}${i >= EV_CFG.MAX_HUD ? ' · HUD 排第 ' + (i + 1) + '（輪不到顯示）' : ''}</div>
+      </div>
+      <button class="hud-ev-btn" data-i="${i}">✓ 確認</button>
+    </div>`).join('');
+  box.querySelectorAll('.hud-ev-btn').forEach(b => b.onclick = () => confirmHudEvent(list[+b.dataset.i], b));
+}
+
+async function confirmHudEvent(e, btn) {
+  if (!e) return;
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    if (e.src === 'memo') {
+      await window.updateMemoInFirestore(e.id, { done: true, completedAt: Date.now(), updatedAt: Date.now() });
+    } else {
+      await window.ackEventInFirestore(e.key, {
+        key: e.key, src: e.src, kind: e.kind || e.src, refId: e.vehicleId || e.id || '',
+        target: e.date, title: e.title, ackedAt: Date.now()
+      });
+    }
+    showToast('已確認 ✓');
+  } catch (err) { console.error(err); showToast('確認失敗'); btn.disabled = false; btn.textContent = '✓ 確認'; }
+}
+
+async function ackEvent(key, src, kind, refId, target, title) {
+  try {
+    await window.ackEventInFirestore(key, { key, src, kind, refId, target, title: title || '', ackedAt: Date.now() });
+    showToast('已確認，HUD 不再顯示 ✓');
+  } catch (err) { console.error(err); showToast('確認失敗'); }
+}
+
+(function hookHud() {
+  const isActive = id => { const el = document.getElementById(id); return el && el.classList.contains('active'); };
+  const wrap = name => { const orig = window[name]; window[name] = function () { if (orig) orig.apply(this, arguments); if (isActive('page-hud')) renderHudPage(); }; };
+  wrap('onDataChanged'); wrap('onAnnivChanged');
+  window.onGarageChanged = (function (orig) { return function () { if (orig) orig(); if (isActive('page-hud')) renderHudPage(); if (isActive('page-garage')) renderGarageAlerts(); }; })(window.onGarageChanged);
+  window.onAcksChanged = () => { if (isActive('page-hud')) renderHudPage(); if (isActive('page-garage')) renderGarageAlerts(); };
+  document.querySelector('.tab[data-page="hud"]').addEventListener('click', renderHudPage);
+  setInterval(() => { if (isActive('page-hud')) renderHudPage(); }, 60000); // 跨日自動更新
+})();
+window.ackEvent = ackEvent;
+
 // 暴露給 onclick 使用
 window.selectType = selectType;
 window.selectPriority = selectPriority;
@@ -2874,6 +3123,7 @@ window.clearReviewRange = clearReviewRange;
 
 renderList();
 </script>
+
 
 </body>
 </html>
